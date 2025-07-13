@@ -503,7 +503,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
   //
   if (!(sdResponse.r1 & kSDOCRCardBusy)) {
     SDHC_DPRINTF("Timed out initializing card\n");
-    return false;
+    return 1;
   }
   sdhc->is_card_high_capacity = sdResponse.r1 & kSDOCRCCSHighCapacity;
 
@@ -820,7 +820,7 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
         return 1;
     }
 
-    if (sdhc_select_deselect(sdhc, true)) {
+    if (sdhc_select_deselect(sdhc, 1)) {
         return 1;
     }
 
