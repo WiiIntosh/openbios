@@ -76,7 +76,7 @@ static inline void sdhc_write8(sdhc_device_t *sdhc, uint32_t offset, uint8_t dat
   sdhc_write32(sdhc, offset, tmp);
 }
 
-static inline bool sdhc_is_sdcard(sdhc_device_t *sdhc) {
+static inline int sdhc_is_sdcard(sdhc_device_t *sdhc) {
   return sdhc->card_type != kSDCardTypeMMC;
 }
 
@@ -97,14 +97,14 @@ static inline uint32_t sdhc_get_present_state(sdhc_device_t *sdhc) {
 //
 // Check if card is present.
 //
-static inline bool sdhc_is_card_present(sdhc_device_t *sdhc) {
+static inline int sdhc_is_card_present(sdhc_device_t *sdhc) {
   return (sdhc_get_present_state(sdhc) & kSDHCRegPresentStateCardInserted) != 0;
 }
 
 //
 // Check if card is write protected.
 //
-static inline bool shdc_is_card_write_protected(sdhc_device_t *sdhc) {
+static inline int shdc_is_card_write_protected(sdhc_device_t *sdhc) {
   return (sdhc_get_present_state(sdhc) & kSDHCRegPresentStateCardWriteable) == 0;
 }
 
@@ -235,7 +235,7 @@ static int sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
 //
 // Sets the card voltage used by the controller.
 //
-static void sdhc_set_power(sdhc_device_t *sdhc, bool enabled) {
+static void sdhc_set_power(sdhc_device_t *sdhc, int enabled) {
   //
   // Clear power register.
   //
@@ -287,7 +287,7 @@ static void sdhc_set_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidth) {
 }
 
 static int sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
-                        void *buffer, uint16_t blockCount, bool bufferRead, sd_cmd_response_t *outResponse) {
+                        void *buffer, uint16_t blockCount, int bufferRead, sd_cmd_response_t *outResponse) {
   uint32_t  timeout;
   uint16_t  commandValue;
   uint16_t  transferMode;
@@ -382,7 +382,7 @@ static int sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t respo
     return 0;
   }
 
-  while (true) {
+  while (1) {
     //
     // Wait for transfer to complete or a DMA interrupt to occur.
     //
@@ -428,11 +428,11 @@ static int sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t respo
 // Sends an SD app command.
 //
 static int sdhc_app_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
-                            void *buffer, uint16_t blockCount, bool bufferRead, sd_cmd_response_t *outResponse) {
+                            void *buffer, uint16_t blockCount, int bufferRead, sd_cmd_response_t *outResponse) {
   sd_cmd_response_t   appResponse;
   int                 result;
 
-  result = sdhc_command(sdhc, kSDCommandAppCommand, kSDHCResponseTypeR1, (sdhc->card_addr << kSDRelativeAddressShift), NULL, 0, false, &appResponse);
+  result = sdhc_command(sdhc, kSDCommandAppCommand, kSDHCResponseTypeR1, (sdhc->card_addr << kSDRelativeAddressShift), NULL, 0, 0, &appResponse);
   if (result) {
     return result;
   }
@@ -451,7 +451,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
   //
   // Send card to IDLE state.
   //
-  result = sdhc_command(sdhc, kSDCommandGoIdleState, kSDHCResponseTypeR0, 0, NULL, 0, false, NULL);
+  result = sdhc_command(sdhc, kSDCommandGoIdleState, kSDHCResponseTypeR0, 0, NULL, 0, 0, NULL);
   if (result) {
     return result;
   }
@@ -461,7 +461,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
   // Issue SEND_IF_COND to card.
   // If no response, this is either is SD 1.0 or MMC.
   //
-  result = sdhc_command(sdhc, kSDCommandSendIfCond, kSDHCResponseTypeR7, 0x1AA, NULL, 0, false, &sdResponse);
+  result = sdhc_command(sdhc, kSDCommandSendIfCond, kSDHCResponseTypeR7, 0x1AA, NULL, 0, 0, &sdResponse);
   if (result) {
     SDHC_DPRINTF("Card did not respond to SEND_IF_COND, not an SD 2.00 card\n");
     sdhc->card_type = kSDCardTypeSD_Legacy;// TODO have timeout status
@@ -472,7 +472,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
   //
   SDHC_DPRINTF("Initializing %s card\n", sdhc->card_type == kSDCardTypeSD_Legacy ? "MMC or legacy SD" : "SD 2.00");
   for (int i = 0; i < 20; i++) {
-    result = sdhc_app_command(sdhc, kSDAppCommandSendOpCond, kSDHCResponseTypeR3, kSDOCRInitValue, NULL, 0, false, &sdResponse);
+    result = sdhc_app_command(sdhc, kSDAppCommandSendOpCond, kSDHCResponseTypeR3, kSDOCRInitValue, NULL, 0, 0, &sdResponse);
 
     //
     // No response indicates an MMC card.
@@ -512,7 +512,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
   //
   // Get CID from card.
   //
-  result = sdhc_command(sdhc, kSDCommandAllSendCID, kSDHCResponseTypeR2, 0, NULL, 0, false, &cidResponse);
+  result = sdhc_command(sdhc, kSDCommandAllSendCID, kSDHCResponseTypeR2, 0, NULL, 0, 0, &cidResponse);
   if (result) {
     return result;
   }
@@ -521,7 +521,7 @@ static int sdhc_reset_card(sdhc_device_t *sdhc) {
     //
     // Ask card to send address.
     //
-    result = sdhc_command(sdhc, kSDCommandSendRelativeAddress, kSDHCResponseTypeR6, 0, NULL, 0, false, &sdResponse);
+    result = sdhc_command(sdhc, kSDCommandSendRelativeAddress, kSDHCResponseTypeR6, 0, NULL, 0, 0, &sdResponse);
     if (result) {
       return result;
     }
@@ -540,7 +540,7 @@ static int sdhc_read_csd(sdhc_device_t *sdhc) {
   int               result;
 
   csdResponse = (sd_cmd_response_t*)&sdhc->csd;
-  result = sdhc_command(sdhc, kSDCommandSendCSD, kSDHCResponseTypeR2, sdhc->card_addr << kSDRelativeAddressShift, NULL, 0, false, csdResponse);
+  result = sdhc_command(sdhc, kSDCommandSendCSD, kSDHCResponseTypeR2, sdhc->card_addr << kSDRelativeAddressShift, NULL, 0, 0, csdResponse);
   if (result) {
     return result;
   }
@@ -599,8 +599,8 @@ static int sdhc_read_csd(sdhc_device_t *sdhc) {
 //
 // Selects or deselects the card.
 //
-static int sdhc_select_deselect(sdhc_device_t *sdhc, bool select) {
-  return sdhc_command(sdhc, kSDCommandSelectDeselectCard, kSDHCResponseTypeR1b, select ? (sdhc->card_addr << kSDRelativeAddressShift) : 0, NULL, 0, false, NULL);
+static int sdhc_select_deselect(sdhc_device_t *sdhc, int select) {
+  return sdhc_command(sdhc, kSDCommandSelectDeselectCard, kSDHCResponseTypeR1b, select ? (sdhc->card_addr << kSDRelativeAddressShift) : 0, NULL, 0, 0, NULL);
 }
 
 //
@@ -619,7 +619,7 @@ static int sdhc_set_card_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidt
       SDHC_DPRINTF("Setting card bus width to 1-bit mode\n");
     }
 
-    result = sdhc_app_command(sdhc, kSDAppCommandSetBusWidth, kSDHCResponseTypeR1, val, NULL, 0, false, NULL);
+    result = sdhc_app_command(sdhc, kSDAppCommandSetBusWidth, kSDHCResponseTypeR1, val, NULL, 0, 0, NULL);
   } else {
     // TODO MMC
     result = 1;
@@ -642,7 +642,7 @@ static int sdhc_set_card_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidt
 static int sdhc_set_block_length(sdhc_device_t *sdhc, uint16_t block_size) {
   int result;
 
-  result = sdhc_command(sdhc, kSDCommandSetBlockLength, kSDHCResponseTypeR1, block_size, NULL, 0, false, NULL);
+  result = sdhc_command(sdhc, kSDCommandSetBlockLength, kSDHCResponseTypeR1, block_size, NULL, 0, 0, NULL);
   if (!result) {
     sdhc->block_size = block_size;
   }
@@ -678,7 +678,7 @@ static void ob_wii_sdhc_read_blocks(int *idx) {
         if (len > (SDHC_BUFFER_SIZE / kSDBlockSize))
             len = SDHC_BUFFER_SIZE / kSDBlockSize;
 
-        if (sdhc_command(sdhc, kSDCommandReadMultipleBlock, kSDHCResponseTypeR1, blk, dest, len, true, NULL)) {
+        if (sdhc_command(sdhc, kSDCommandReadMultipleBlock, kSDHCResponseTypeR1, blk, dest, len, 1, NULL)) {
             SDHC_DPRINTF("ob_wii_sdhc_read_blocks: error\n");
             RET(0);
         }
@@ -806,7 +806,7 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
     if (sdhc_set_clock(sdhc, kSDHCInitSpeedClock400kHz)) {
         return 1;
     }
-    sdhc_set_power(sdhc, true);
+    sdhc_set_power(sdhc, 1);
 
     if (sdhc_reset_card(sdhc)) {
         return 1;
