@@ -18,7 +18,7 @@
 int ob_pci_init(void);
 #endif
 
-#if defined(CONFIG_DRIVER_PCI) || defined(CONFIG_DRIVER_ESCC)
+#if defined(CONFIG_DRIVER_PCI) || defined(CONFIG_DRIVER_ESCC) || defined(CONFIG_WII)
 #ifdef CONFIG_PPC
 extern int is_apple(void);
 extern int is_oldworld(void);
@@ -145,6 +145,9 @@ unsigned char keyboard_readdata(void);
 void ob_virtio_init(const char *path, const char *dev_name, uint64_t common_cfg,
                     uint64_t device_cfg, uint64_t notify_base, uint32_t notify_mult,
                     int idx);
+#endif
+#ifdef CONFIG_DRIVER_WII_SDHC
+int ob_wii_shdc_init(const char *path, unsigned long mmio_base);
 #endif
 int macio_get_nvram_size(void);
 void macio_nvram_put(char *buf);

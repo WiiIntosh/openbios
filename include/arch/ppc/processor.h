@@ -103,6 +103,14 @@
 #define S_IBAT2L	533
 #define S_IBAT3U	534
 #define S_IBAT3L	535
+#define S_IBAT4U	560 /* 750CL upper IBATs */
+#define S_IBAT4L	561
+#define S_IBAT5U	562
+#define S_IBAT5L	563
+#define S_IBAT6U	564
+#define S_IBAT6L	565
+#define S_IBAT7U	566
+#define S_IBAT7L	567
 #define S_DBAT0U	536
 #define S_DBAT0L	537
 #define S_DBAT1U	538
@@ -111,6 +119,14 @@
 #define S_DBAT2L	541
 #define S_DBAT3U	542
 #define S_DBAT3L	543
+#define S_DBAT4U	568 /* 750CL upper IBATs */
+#define S_DBAT4L	569
+#define S_DBAT5U	570
+#define S_DBAT5L	571
+#define S_DBAT6U	572
+#define S_DBAT6L	573
+#define S_DBAT7U	574
+#define S_DBAT7L	575
 #define S_UMMCR2	928
 #define S_UPMC5		929	/* User Performance Monitor Counter Register */
 #define S_UPMC6		930

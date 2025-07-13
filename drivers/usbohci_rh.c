@@ -59,7 +59,7 @@ ohci_rh_enable_port (usbdev_t *dev, int port)
 
 		/* start reset */
 		OHCI_INST (dev->controller)->opreg->HcRhPortStatus[port] =
-			__cpu_to_le32(SetPortReset);
+			CPU_TO_USBHC(SetPortReset);
 		int timeout = 200; /* timeout after 200 * 500us == 100ms */
 		while ((READ_OPREG(OHCI_INST(dev->controller), HcRhPortStatus[port])
 					& PortResetStatus)
@@ -79,7 +79,7 @@ ohci_rh_enable_port (usbdev_t *dev, int port)
 		}
 		/* clear reset status change */
 		OHCI_INST(dev->controller)->opreg->HcRhPortStatus[port] =
-			__cpu_to_le32(PortResetStatusChange);
+			CPU_TO_USBHC(PortResetStatusChange);
 		usb_debug ("rh port reset finished after %dms.\n", (200-timeout)/2);
 	}
 }
@@ -89,7 +89,7 @@ static void
 ohci_rh_disable_port (usbdev_t *dev, int port)
 {
 	OHCI_INST (dev->controller)->opreg->HcRhPortStatus[port] =
-		__cpu_to_le32(ClearPortEnable); // disable port
+		CPU_TO_USBHC(ClearPortEnable); // disable port
 	int timeout = 50; /* timeout after 50 * 100us == 5ms */
 	while ((READ_OPREG(OHCI_INST (dev->controller), HcRhPortStatus[port])
 				& PortEnableStatus)
@@ -118,7 +118,7 @@ ohci_rh_scanport (usbdev_t *dev, int port)
 		return;
 
 	// clear port state change
-	OHCI_INST(dev->controller)->opreg->HcRhPortStatus[port] = __cpu_to_le32(ConnectStatusChange);
+	OHCI_INST(dev->controller)->opreg->HcRhPortStatus[port] = CPU_TO_USBHC(ConnectStatusChange);
 	ohci_rh_enable_port (dev, port);
 
 	mdelay(100); // wait for signal to stabilize
@@ -142,7 +142,7 @@ ohci_rh_report_port_changes (usbdev_t *dev)
 	for (i = 0; i < RH_INST(dev)->numports; i++) {
 		// maybe detach+attach happened between two scans?
 		if (READ_OPREG(ohcic, HcRhPortStatus[i]) & ConnectStatusChange) {
-			ohcic->opreg->HcRhPortStatus[i] = __cpu_to_le32(ConnectStatusChange);
+			ohcic->opreg->HcRhPortStatus[i] = CPU_TO_USBHC(ConnectStatusChange);
 			usb_debug("attachment change on port %d\n", i);
 			return i;
 		}
@@ -171,7 +171,7 @@ ohci_rh_poll (usbdev_t *dev)
 	/* Check if anything changed. */
 	if (!(READ_OPREG(ohcic, HcInterruptStatus) & RootHubStatusChange))
 		return;
-	ohcic->opreg->HcInterruptStatus = __cpu_to_le32(RootHubStatusChange);
+	ohcic->opreg->HcInterruptStatus = CPU_TO_USBHC(RootHubStatusChange);
 	usb_debug("root hub status change\n");
 
 	/* Scan ports with changed connection status. */

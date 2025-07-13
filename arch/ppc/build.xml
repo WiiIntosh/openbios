@@ -29,6 +29,13 @@
   <object source="QEMU,VGA.bin" target="fcode" condition="DRIVER_VGA"/>
  </dictionary>
 
+ <dictionary name="openbios-wii" init="openbios" target="forth" condition="WII">
+  <object source="ppc.fs"/>
+  <object source="wii/tree.fs"/>
+  <object source="wii/wii.fs"/>
+  <object source="Wii,GX2.bin" target="fcode" condition="DRIVER_WII_GX2"/>
+ </dictionary>
+
  <!-- HACK ALERT -->
 
  <executable name="target/include/briq-dict.h" target="target" condition="BRIQ">
@@ -89,6 +96,21 @@
 	$(call quiet-command,$(CC) $$EXTRACFLAGS $(CFLAGS) $(INCLUDES) -c -o $@ $(SRCDIR)/arch/ppc/mol/kernel.c, "  CC    $(TARGET_DIR)$@")]]></rule>
  </executable>
 
+ <executable name="target/include/wii-dict.h" target="target" condition="WII">
+  <rule><![CDATA[
+	$(call quiet-command,true, "  GEN   $(TARGET_DIR)$@")
+	@echo "static const char forth_dictionary[] = {" > $@
+	@cat $< | hexdump -ve '1/0 "\t" 8/1 "0x%02x, " 1/0 "\n"' \
+					| sed 's/0x  ,//g' >> $@
+	@echo "};" >> $@]]></rule>
+  <external-object source="openbios-wii.dict"/>
+ </executable>
+
+ <executable name="target/arch/ppc/wii/kernel.o" target="target" condition="WII">
+  <rule><![CDATA[ $(SRCDIR)/arch/ppc/wii/kernel.c $(ODIR)/target/include/wii-dict.h
+	$(call quiet-command,$(CC) $$EXTRACFLAGS $(CFLAGS) $(INCLUDES) -c -o $@ $(SRCDIR)/arch/ppc/wii/kernel.c, "  CC    $(TARGET_DIR)$@")]]></rule>
+ </executable>
+
  <!-- END OF HACK ALERT -->
 
  <library name="briq" target="target" type="static" condition="BRIQ">
@@ -142,6 +164,17 @@
   <object source="mol/prom.c" flags="-I$(SRCDIR)/arch/ppc"/>
   <object source="mol/tree.c" flags="-I$(SRCDIR)/arch/ppc"/>
   <external-object source="target/arch/ppc/mol/kernel.o"/>
+ </library>
+
+ <library name="wii" target="target" type="static" condition="WII">
+  <object source="wii/ofmem.c"/>
+  <object source="wii/wii.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/init.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <external-object source="target/arch/ppc/wii/kernel.o"/>
+  <object source="wii/main.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/methods.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/vfd.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/console.c" flags="-I$(SRCDIR)/arch/ppc"/>
  </library>
 
  <executable name="openbios-briq.elf" target="target" condition="BRIQ">
@@ -208,6 +241,25 @@
   <external-object source="libdrivers.a"/>
   <external-object source="libfs.a"/>
   <external-object source="liblibc.a"/>
+ </executable>
+
+ <executable name="openbios-wii.elf" target="target" condition="WII">
+  <rule>
+	$(call quiet-command,$(LD) --warn-common -z noexecstack -N -T $(SRCDIR)/arch/$(ARCH)/wii/ldscript -o $@.nostrip --whole-archive $^,"  LINK  $(TARGET_DIR)$@")
+	$(call quiet-command,$(NM) $@.nostrip | sort > $(ODIR)/openbios-wii.syms,"  GEN   $(TARGET_DIR)$@.syms")
+	$(call quiet-command,$(STRIP) $@.nostrip -o $@,"  STRIP $(TARGET_DIR)$@")</rule>
+  <object source="wii/start.S"/>
+  <object source="wii/switch.S"/>
+  <object source="wii/context.c"/>
+  <object source="timebase.S"/>
+  <external-object source="libwii.a"/>
+  <external-object source="libbootstrap.a"/>
+  <external-object source="libopenbios.a"/>
+  <external-object source="libpackages.a"/>
+  <external-object source="libdrivers.a"/>
+  <external-object source="libfs.a"/>
+  <external-object source="liblibc.a"/>
+  <external-object source="libgcc.a"/>
  </executable>
 
 </build>

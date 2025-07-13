@@ -37,7 +37,25 @@
 #include "libc/byteorder.h"
 #include "usb.h"
 
-#define READ_OPREG(ohci, field) (__le32_to_cpu((ohci)->opreg->field))
+//
+// The Wii and Wii U do byteswapping on the bus side, all bus reads must be big endian.
+//
+#ifdef CONFIG_WII
+extern void flush_dcache_range(char *start, char *stop);
+extern void invalidate_dcache_range(char *start, char *stop);
+
+#define USBHC_TO_CPU(x)				__be32_to_cpu(x)
+#define CPU_TO_USBHC(x)				__cpu_to_be32(x)
+#define DC_FLUSH(b,l)				flush_dcache_range((char*)b, ((char*)b) + l)
+#define DC_INVALIDATE(b,l)			invalidate_dcache_range((char*)b, ((char*)b) + l)
+#else
+#define USBHC_TO_CPU(x)				__le32_to_cpu(x)
+#define CPU_TO_USBHC(x)				__cpu_to_le32(x)
+#define DC_FLUSH(b,l)
+#define DC_INVALIDATE(b,l)
+#endif
+
+#define READ_OPREG(ohci, field) (USBHC_TO_CPU((ohci)->opreg->field))
 #define MASK(startbit, lenbit) (((1<<(lenbit))-1)<<(startbit))
 
 	// FIXME: fake
@@ -208,6 +226,9 @@
 		u32 tail_pointer;
 		u32 head_pointer;
 		u32 next_ed;
+#if CONFIG_WII
+		u32 pad[4]; // Padding to force 32-byte alignment.
+#endif
 	} __attribute__ ((packed)) ed_t;
 #define ED_HALTED 1
 #define ED_TOGGLE 2
@@ -226,6 +247,9 @@
 		u32 current_buffer_pointer;
 		u32 next_td;
 		u32 buffer_end;
+#if CONFIG_WII
+		u32 pad[4]; // Padding to force 32-byte alignment.
+#endif
 	} __attribute__ ((packed)) td_t;
 /*
  * Bits 0 through 17 of .config won't be interpreted by the host controller
