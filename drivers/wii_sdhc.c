@@ -111,7 +111,7 @@ static inline bool shdc_is_card_write_protected(sdhc_device_t *sdhc) {
 //
 // Reset the controller.
 //
-static bool sdhc_reset(sdhc_device_t *sdhc, uint8_t bits) {
+static int sdhc_reset(sdhc_device_t *sdhc, uint8_t bits) {
   uint32_t timeout;
 
   SDHC_DPRINTF("Resetting host controller with bits 0x%X\n", bits);
@@ -129,24 +129,25 @@ static bool sdhc_reset(sdhc_device_t *sdhc, uint8_t bits) {
 
   if (timeout == 0) {
     SDHC_DPRINTF("Timed out waiting for reset bits to clear: 0x%X\n", sdhc_read8(sdhc, kSDHCRegSoftwareReset));
-    return false;
+    return 1;
   }
 
   SDHC_DPRINTF("Host controller is now reset\n");
-  return true;
+  return 0;
 }
 
 //
 // Initializes the controller.
 //
-static bool sdhc_init(sdhc_device_t *sdhc) {
+static int sdhc_init(sdhc_device_t *sdhc) {
   SDHC_DPRINTF("SD host controller version: 0x%X, ps: 0x%X\n", sdhc_get_version(sdhc), sdhc_get_present_state(sdhc));
 
   //
   // Reset controller completely.
   //
-  if (!sdhc_reset(sdhc, kSDHCRegSoftwareResetAll)) {
-    return false;
+  int result = sdhc_reset(sdhc, kSDHCRegSoftwareResetAll);
+  if (result) {
+    return result;
   }
 
   //
@@ -161,13 +162,13 @@ static bool sdhc_init(sdhc_device_t *sdhc) {
   sdhc_write16(sdhc, kSDHCRegErrorIntStatusEnable, -1);
   sdhc_write16(sdhc, kSDHCRegNormalIntSignalEnable, 0);
   sdhc_write16(sdhc, kSDHCRegErrorIntSignalEnable, 0);
-  return true;
+  return 0;
 }
 
 //
 // Sets the controller clock rate.
 //
-static bool sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
+static int sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
   uint32_t timeout;
 
   //
@@ -175,7 +176,7 @@ static bool sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
   //
   sdhc_write16(sdhc, kSDHCRegClockControl, 0);
   if (speedHz == 0) {
-    return true;
+    return 0;
   }
 
   //
@@ -217,7 +218,7 @@ static bool sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
 
   if (timeout == 0) {
     SDHC_DPRINTF("Timed out waiting for clock to become stable\n");
-    return false;
+    return 1;
   }
   SDHC_DPRINTF("Clock is now stable\n");
 
@@ -228,7 +229,7 @@ static bool sdhc_set_clock(sdhc_device_t *sdhc, uint32_t speedHz) {
   SDHC_DPRINTF("Clock control register is now 0x%X\n", sdhc_read16(sdhc, kSDHCRegClockControl));
   mdelay(100);
 
-  return true;
+  return 0;
 }
 
 //
@@ -285,9 +286,9 @@ static void sdhc_set_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidth) {
   sdhc_write16(sdhc, kSDHCRegHostControl1, hcControl);
 }
 
-static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
+static int sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
                         void *buffer, uint16_t blockCount, bool bufferRead, sd_cmd_response_t *outResponse) {
-    uint32_t  timeout;
+  uint32_t  timeout;
   uint16_t  commandValue;
   uint16_t  transferMode;
   uint32_t  intStatus;
@@ -306,7 +307,7 @@ static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t resp
 
   if (timeout == 0) {
     SDHC_DPRINTF("Timed out waiting for command inhibit\n");
-    return false;
+    return 1;
   }
 
   //
@@ -364,7 +365,7 @@ static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t resp
 
   if (timeout == 0) {
     SDHC_DPRINTF("Timed out waiting for command to complete\n");
-    return false;
+    return 1;
   }
 
   if (outResponse != NULL) {
@@ -378,7 +379,7 @@ static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t resp
   // If no data, command is done.
   //
   if (buffer == NULL) {
-    return true;
+    return 0;
   }
 
   while (true) {
@@ -396,7 +397,7 @@ static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t resp
 
     if (timeout == 0) {
       SDHC_DPRINTF("Timed out waiting for data to complete\n");
-      return false;
+      return 1;
     }
 
     //
@@ -420,18 +421,20 @@ static bool sdhc_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t resp
     memcpy(buffer, sdhc->buffer, blockCount * kSDBlockSize);
   }
 
-  return true;
+  return 0;
 }
 
 //
 // Sends an SD app command.
 //
-static bool sdhc_app_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
+static int sdhc_app_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t responseType, uint32_t argument,
                             void *buffer, uint16_t blockCount, bool bufferRead, sd_cmd_response_t *outResponse) {
   sd_cmd_response_t   appResponse;
+  int                 result;
 
-  if (!sdhc_command(sdhc, kSDCommandAppCommand, kSDHCResponseTypeR1, (sdhc->card_addr << kSDRelativeAddressShift), NULL, 0, false, &appResponse)) {
-    return false;
+  result = sdhc_command(sdhc, kSDCommandAppCommand, kSDHCResponseTypeR1, (sdhc->card_addr << kSDRelativeAddressShift), NULL, 0, false, &appResponse);
+  if (result) {
+    return result;
   }
 
   return sdhc_command(sdhc, commandIndex, responseType, argument, buffer, blockCount, bufferRead, outResponse);
@@ -440,16 +443,17 @@ static bool sdhc_app_command(sdhc_device_t *sdhc, uint8_t commandIndex, uint8_t 
 //
 // Resets the card.
 //
-static bool sdhc_reset_card(sdhc_device_t *sdhc) {
+static int sdhc_reset_card(sdhc_device_t *sdhc) {
   sd_cmd_response_t sdResponse;
   sd_cmd_response_t cidResponse;
-  bool              result;
+  int              result;
 
   //
   // Send card to IDLE state.
   //
-  if (!sdhc_command(sdhc, kSDCommandGoIdleState, kSDHCResponseTypeR0, 0, NULL, 0, false, NULL)) {
-    return false;
+  result = sdhc_command(sdhc, kSDCommandGoIdleState, kSDHCResponseTypeR0, 0, NULL, 0, false, NULL);
+  if (result) {
+    return result;
   }
   SDHC_DPRINTF("Card has been reset and should be in IDLE status\n");
 
@@ -457,7 +461,8 @@ static bool sdhc_reset_card(sdhc_device_t *sdhc) {
   // Issue SEND_IF_COND to card.
   // If no response, this is either is SD 1.0 or MMC.
   //
-  if (!sdhc_command(sdhc, kSDCommandSendIfCond, kSDHCResponseTypeR7, 0x1AA, NULL, 0, false, &sdResponse)) {
+  result = sdhc_command(sdhc, kSDCommandSendIfCond, kSDHCResponseTypeR7, 0x1AA, NULL, 0, false, &sdResponse);
+  if (result) {
     SDHC_DPRINTF("Card did not respond to SEND_IF_COND, not an SD 2.00 card\n");
     sdhc->card_type = kSDCardTypeSD_Legacy;// TODO have timeout status
   }
@@ -472,12 +477,12 @@ static bool sdhc_reset_card(sdhc_device_t *sdhc) {
     //
     // No response indicates an MMC card.
     //
-    if (!result && sdhc->card_type == kSDCardTypeSD_Legacy) {
+    if (result && sdhc->card_type == kSDCardTypeSD_Legacy) {
       SDHC_DPRINTF("Card did not respond to SEND_OP_COND, not an SD card\n");
       sdhc->card_type = kSDCardTypeMMC;
       break;
-    } else if (!result) {
-      return false;
+    } else if (result) {
+      return result;
     }
 
     if (sdResponse.r1 & kSDOCRCardBusy) {
@@ -507,16 +512,18 @@ static bool sdhc_reset_card(sdhc_device_t *sdhc) {
   //
   // Get CID from card.
   //
-  if (!sdhc_command(sdhc, kSDCommandAllSendCID, kSDHCResponseTypeR2, 0, NULL, 0, false, &cidResponse)) {
-    return false;
+  result = sdhc_command(sdhc, kSDCommandAllSendCID, kSDHCResponseTypeR2, 0, NULL, 0, false, &cidResponse);
+  if (result) {
+    return result;
   }
 
   if (sdhc_is_sdcard(sdhc)) {
     //
     // Ask card to send address.
     //
-    if (!sdhc_command(sdhc, kSDCommandSendRelativeAddress, kSDHCResponseTypeR6, 0, NULL, 0, false, &sdResponse)) {
-      return false;
+    result = sdhc_command(sdhc, kSDCommandSendRelativeAddress, kSDHCResponseTypeR6, 0, NULL, 0, false, &sdResponse);
+    if (result) {
+      return result;
     }
     sdhc->card_addr = sdResponse.r1 >> kSDRelativeAddressShift;
   }
@@ -525,15 +532,17 @@ static bool sdhc_reset_card(sdhc_device_t *sdhc) {
     cidResponse.data[0], cidResponse.data[1], cidResponse.data[2], cidResponse.data[3]);
 
   memcpy(&sdhc->cid, cidResponse.data, sizeof (sdhc->cid));
-  return true;
+  return 0;
 }
 
-static bool sdhc_read_csd(sdhc_device_t *sdhc) {
+static int sdhc_read_csd(sdhc_device_t *sdhc) {
   sd_cmd_response_t *csdResponse;
+  int               result;
 
   csdResponse = (sd_cmd_response_t*)&sdhc->csd;
-  if (!sdhc_command(sdhc, kSDCommandSendCSD, kSDHCResponseTypeR2, sdhc->card_addr << kSDRelativeAddressShift, NULL, 0, false, csdResponse)) {
-    return false;
+  result = sdhc_command(sdhc, kSDCommandSendCSD, kSDHCResponseTypeR2, sdhc->card_addr << kSDRelativeAddressShift, NULL, 0, false, csdResponse);
+  if (result) {
+    return result;
   }
   SDHC_DPRINTF("CSD: 0x%08X%08X%08X%08X\n", csdResponse->data[0], csdResponse->data[1], csdResponse->data[2], csdResponse->data[3]);
 
@@ -555,7 +564,7 @@ static bool sdhc_read_csd(sdhc_device_t *sdhc) {
       cardBlockBytes = ((uint64_t)sdhc->csd.sd2.cSize + 1) * (512 * kByte);
     } else {
       SDHC_DPRINTF("Unsupported SD card\n");
-      return false;
+      return 1;
     }
     sdhc->block_count = (uint32_t)(cardBlockBytes / kSDBlockSize);
     SDHC_DPRINTF("Block count: %u, high capacity: %u\n", sdhc->block_count, sdhc->is_card_high_capacity);
@@ -584,22 +593,22 @@ static bool sdhc_read_csd(sdhc_device_t *sdhc) {
    // WIIDBGLOG("MMC maximum clock speed is %u Hz", _mmcMaxStandardClock);
   }
 
-  return true;
+  return 0;
 }
 
 //
 // Selects or deselects the card.
 //
-static bool sdhc_select_deselect(sdhc_device_t *sdhc, bool select) {
+static int sdhc_select_deselect(sdhc_device_t *sdhc, bool select) {
   return sdhc_command(sdhc, kSDCommandSelectDeselectCard, kSDHCResponseTypeR1b, select ? (sdhc->card_addr << kSDRelativeAddressShift) : 0, NULL, 0, false, NULL);
 }
 
 //
 // Sets the card's bus width.
 //
-static bool sdhc_set_card_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidth) {
+static int sdhc_set_card_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWidth) {
   uint16_t  val;
-  bool      result;
+  int       result;
 
   if (sdhc_is_sdcard(sdhc)) {
     if (busWidth == kSDBusWidth4) {
@@ -613,28 +622,28 @@ static bool sdhc_set_card_bus_width(sdhc_device_t *sdhc, sdhc_bus_width_t busWid
     result = sdhc_app_command(sdhc, kSDAppCommandSetBusWidth, kSDHCResponseTypeR1, val, NULL, 0, false, NULL);
   } else {
     // TODO MMC
-    result = false;
+    result = 1;
   }
 
-  if (!result) {
-    return false;
+  if (result) {
+    return result;
   }
 
   //
   // Controller needs to match.
   //
   sdhc_set_bus_width(sdhc, busWidth);
-  return true;
+  return 0;
 }
 
 //
 // Sets the card's block length.
 //
-static bool sdhc_set_block_length(sdhc_device_t *sdhc, uint16_t block_size) {
-  bool result;
+static int sdhc_set_block_length(sdhc_device_t *sdhc, uint16_t block_size) {
+  int result;
 
   result = sdhc_command(sdhc, kSDCommandSetBlockLength, kSDHCResponseTypeR1, block_size, NULL, 0, false, NULL);
-  if (result) {
+  if (!result) {
     sdhc->block_size = block_size;
   }
   return result;
@@ -669,7 +678,7 @@ static void ob_wii_sdhc_read_blocks(int *idx) {
         if (len > (SDHC_BUFFER_SIZE / kSDBlockSize))
             len = SDHC_BUFFER_SIZE / kSDBlockSize;
 
-        if (!sdhc_command(sdhc, kSDCommandReadMultipleBlock, kSDHCResponseTypeR1, blk, dest, len, true, NULL)) {
+        if (sdhc_command(sdhc, kSDCommandReadMultipleBlock, kSDHCResponseTypeR1, blk, dest, len, true, NULL)) {
             SDHC_DPRINTF("ob_wii_sdhc_read_blocks: error\n");
             RET(0);
         }
@@ -781,9 +790,9 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
     //
     // Initialize the SDHC.
     //
-    if (!sdhc_init(sdhc)) {
+    if (sdhc_init(sdhc)) {
         SDHC_DPRINTF("Failed to init SDHC");
-        return 0;
+        return 1;
     }
 
     //
@@ -791,36 +800,36 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
     //
     if (!sdhc_is_card_present(sdhc)) {
         SDHC_DPRINTF("No card is currently inserted");
-        return 0;
+        return 1;
     }
 
-    if (!sdhc_set_clock(sdhc, kSDHCInitSpeedClock400kHz)) {
-        return 0;
+    if (sdhc_set_clock(sdhc, kSDHCInitSpeedClock400kHz)) {
+        return 1;
     }
     sdhc_set_power(sdhc, true);
 
-    if (!sdhc_reset_card(sdhc)) {
-        return 0;
+    if (sdhc_reset_card(sdhc)) {
+        return 1;
     }
 
-    if (!sdhc_read_csd(sdhc)) {
-        return 0;
+    if (sdhc_read_csd(sdhc)) {
+        return 1;
     }
 
-    if (!sdhc_set_clock(sdhc, kSDHCNormalSpeedClock25MHz)) {
-        return 0;
+    if (sdhc_set_clock(sdhc, kSDHCNormalSpeedClock25MHz)) {
+        return 1;
     }
 
-    if (!sdhc_select_deselect(sdhc, true)) {
-        return 0;
+    if (sdhc_select_deselect(sdhc, true)) {
+        return 1;
     }
 
-    if (!sdhc_set_card_bus_width(sdhc, kSDBusWidth4)) {
-        return 0;
+    if (sdhc_set_card_bus_width(sdhc, kSDBusWidth4)) {
+        return 1;
     }
 
-    if (!sdhc_set_block_length(sdhc, kSDBlockSize)) {
-        return 0;
+    if (sdhc_set_block_length(sdhc, kSDBlockSize)) {
+        return 1;
     }
 
     mdelay(1000);
