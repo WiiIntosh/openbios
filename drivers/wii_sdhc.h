@@ -493,10 +493,10 @@ typedef struct {
     uint16_t card_addr;
     
 
-    sd_card_type_t   card_type;
-    bool             is_card_high_capacity;
-    uint32_t         block_count;
-    uint32_t        block_size;
+    sd_card_type_t    card_type;
+    int               is_card_high_capacity;
+    uint32_t          block_count;
+    uint32_t          block_size;
 
     sd_cid_register_t  cid;
     sd_csd_register_t  csd;
