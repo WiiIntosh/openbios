@@ -64,6 +64,22 @@
 .endm
 
 /************************************************************************/
+/*	stack space							*/
+/************************************************************************/
+
+	.section .bss
+	.balign 32
+	.space  32*1024		// 32 K client stack
+client_stack:
+	.space	128
+
+	.space	64*1024		// 64 K stack
+stack:	.space  64
+
+	.space  32*1024		// 32 K exception stack
+estack:	.space	128
+
+/************************************************************************/
 /*	vectors								*/
 /************************************************************************/
 
@@ -454,6 +470,12 @@ l2c_ready:
     li		r4, 0
     sub		r5, r5, r3
     bl		BRANCH_LABEL(memset)
+
+    lis	r1,HA(estack)
+	addi	r1,r1,LO(estack)
+	mtsprg0 r1			// setup exception stack
+	lis	r1,HA(stack)
+	addi	r1,r1,LO(stack)
 
       lis r3, 0x0170
 
