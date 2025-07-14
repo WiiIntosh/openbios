@@ -42,7 +42,7 @@ external
 \
 
 : wii-gx2-driver-install ( -- )
-  h# D7500000 to frame-buffer-adr
+  h# 17500000 to frame-buffer-adr
   default-font set-font
 
   frame-buffer-adr encode-int " address" property

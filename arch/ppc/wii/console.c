@@ -22,8 +22,8 @@
  * ****************************************************************** */
 
 
-#define CAFE_LATTE_IPCPPCMSG      0xCD800000
-#define CAFE_LATTE_IPCPPCCTRL     0xCD800004
+#define CAFE_LATTE_IPCPPCMSG      0x0D800000
+#define CAFE_LATTE_IPCPPCCTRL     0x0D800004
 #define CAFE_LATTE_CMD_PRINT      0xCAFE6400
 
 //

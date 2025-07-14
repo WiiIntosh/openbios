@@ -988,7 +988,7 @@ int ob_usb_ohci_init (const char *path, uint32_t addr)
 	usb_debug("ohci_init: %s addr = %x\n", path, addr);
 #if CONFIG_WII
 	// No PCI on Wii, directly use the passed physical address.
-	ctrl = ohci_init((void *)(0xC0000000 | addr));
+	ctrl = ohci_init((void *)addr);
 #else
 	ctrl = ohci_pci_init(addr);
 #endif

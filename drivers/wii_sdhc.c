@@ -785,7 +785,7 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
     sdhc = malloc(sizeof (*sdhc));
     ofmem_posix_memalign((void **)&sdhc->buffer, SDHC_BUFFER_SIZE, SDHC_BUFFER_SIZE);
 
-    sdhc->mmio_base = 0xC0000000 | mmio_base;
+    sdhc->mmio_base = mmio_base;
 
     //
     // Initialize the SDHC.

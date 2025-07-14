@@ -287,31 +287,6 @@ GLOBL(_start):
     isync
 
     //
-    // Map MEM1 (first 256MB into DBAT2 as read/write uncached for MMIO.
-    // 0x00000000 -> 0xC0000000.
-    //
-    li    8, 0x0000002A@l
-    mtspr S_DBAT2L, 8
-
-    lis   8, 0xC0001FFF@h
-    ori   8, 8, 0xC0001FFF@l
-    mtspr S_DBAT2U, 8
-
-    //
-    // Map MEM2 (first 256MB into DBAT3 as read/write uncached for MMIO.
-    // 0x00000000 -> 0xD0000000.
-    //
-    lis   8, 0x1000002A@h
-    ori   8, 8, 0x1000002A@l
-    mtspr S_DBAT3L, 8
-
-    lis   8, 0xD0001FFF@h
-    ori   8, 8, 0xD0001FFF@l
-    mtspr S_DBAT3U, 8
-    sync
-    isync
-
-    //
     // Ensure BAT4-7 is disabled in HID4.
     //
     mfspr   8, 1011

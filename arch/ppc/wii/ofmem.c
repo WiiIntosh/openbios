@@ -67,6 +67,9 @@ static ofmem_t s_ofmem;
 #define IO_BASE			0x80000000
 #define OFMEM (&s_ofmem)
 
+#define WII_IO_BASE		0x0C000000
+#define WII_MEM2_BASE	0x10000000
+
 static inline unsigned long get_hash_base(void) {
     return HASH_BASE;
 }
@@ -209,10 +212,17 @@ void *realloc(void *ptr, size_t size) {
 /************************************************************************/
 
 ucell ofmem_arch_default_translation_mode(phys_addr_t phys) {
+	//
+	// Wii I/O regions.
+	//
+	if ((phys >= WII_IO_BASE) && (phys < WII_MEM2_BASE))
+		return 0x6a;	/* WIm GxPp, I/O */
+    if (phys >= 0x17500000) // TODO: Gfx memory here, but this is also just regular MEM2 on Wii U.
+        return 0x6a;	/* WIm GxPp, I/O */
     /* XXX: Guard bit not set as it should! */
-    if( phys < IO_BASE || phys >= 0xffc00000 )
-        return 0x02;	/*0xa*/	/* wim GxPp */
-    return 0x6a;		/* WIm GxPp, I/O */
+	if( phys < IO_BASE || phys >= 0xffc00000)
+		return 0x02;	/*0xa*/	/* wim GxPp */
+	return 0x6a;		/* WIm GxPp, I/O */
 }
 
 ucell ofmem_arch_io_translation_mode(phys_addr_t phys) {

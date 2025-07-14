@@ -460,9 +460,9 @@ arch_of_init(void)
     // Pulse the disc light on Wii.
     //
     if (wii_platform == WII_RVL) {
-        out_be32((volatile unsigned int*)0xCD0000C0, in_be32((volatile unsigned int*)0xCD0000C0) | 0x20);
+        out_be32((volatile unsigned int*)0x0D0000C0, in_be32((volatile unsigned int*)0x0D0000C0) | 0x20);
         mdelay(2000);
-        out_be32((volatile unsigned int*)0xCD0000C0, in_be32((volatile unsigned int*)0xCD0000C0) & ~(0x20));
+        out_be32((volatile unsigned int*)0x0D0000C0, in_be32((volatile unsigned int*)0x0D0000C0) & ~(0x20));
     }
 
     printk("\n");
@@ -571,7 +571,7 @@ arch_of_init(void)
         feval("['] wii-gx2-driver-fcode 2 cells + 1 byte-load");
     }
     
-    out_be32((volatile unsigned int*)0xCD040050, 0);
+    out_be32((volatile unsigned int*)0x0D040050, 0);
 
     //
     // Initialize OHCI controller for keyboard support.
