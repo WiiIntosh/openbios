@@ -113,15 +113,8 @@ DECLARE_NODE( ciface, 0, 0, "+/openprom/client-services" );
 static void
 ciface_quiesce( unsigned long args[], unsigned long ret[] )
 {
+    printk("OF quiesce was called\n");
     usb_exit();
-
-#if 0
-    unsigned long msr;
-    /* This seems to be the correct thing to do - but I'm not sure */
-    asm volatile("mfmsr %0" : "=r" (msr) : );
-    msr &= ~(MSR_IR | MSR_DR);
-    asm volatile("mtmsr %0" :: "r" (msr) );
-#endif
 }
 
 /* ( -- ms ) */

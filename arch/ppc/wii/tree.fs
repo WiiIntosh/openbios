@@ -81,6 +81,15 @@ new-device
     : close ;
 finish-device
 
+\ Required for Mac OS X. TODO: investigate to see if this interferes with OS8 or OS9, or if there is a better way.
+\ Taken from MOL.
+new-device
+    " mac-io" device-name
+    " mac-io" device-type
+    " AAPL,Keylargo-DUMMY" model
+    h# 8200b810 encode-int 00000000 encode-int encode+ 80000000 encode-int encode+ 00000000 encode-int encode+ 00080000 encode-int encode+ " assigned-addresses" property
+finish-device
+
 \ -------------------------------------------------------------
 \ Base hardware devices on both Wii and Wii U. Wii U-specific items are added in C code.
 \ -------------------------------------------------------------
