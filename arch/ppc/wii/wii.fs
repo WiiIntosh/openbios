@@ -215,7 +215,7 @@ variable keyboard-phandle 0 keyboard-phandle !
     " wii-gx2" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0c200000 encode-int 80000 encode-int encode+ " reg" property
-    2 encode-int " interrupts" property
+    d# 2 encode-int " interrupts" property
     " /interrupt-controller" find-dev if
       encode-int " interrupt-parent" property
     then
