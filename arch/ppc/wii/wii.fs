@@ -106,7 +106,7 @@ variable keyboard-phandle 0 keyboard-phandle !
     " " encode-string " interrupt-controller" property
     1 encode-int " #interrupt-cells" property
     h# 0d000030 encode-int 10 encode-int encode+ " reg" property
-    14 encode-int " interrupts" property
+    d# 14 encode-int " interrupts" property
     " /interrupt-controller" find-dev if
       encode-int " interrupt-parent" property
     then
@@ -170,7 +170,7 @@ variable keyboard-phandle 0 keyboard-phandle !
     " " encode-string " interrupt-controller" property
     1 encode-int " #interrupt-cells" property
     h# 0d800440 encode-int 48 encode-int encode+ " reg" property
-    24 encode-int " interrupts" property
+    d# 24 encode-int " interrupts" property
     " /interrupt-controller" find-dev if
       encode-int " interrupt-parent" property
     then

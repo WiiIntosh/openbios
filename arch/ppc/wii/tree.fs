@@ -116,7 +116,7 @@ new-device
     " wii-aes" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d020000 encode-int 14 encode-int encode+ " reg" property
-    2 encode-int " interrupts" property
+    d# 2 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -130,7 +130,7 @@ new-device
     " wii-sha" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d030000 encode-int 1c encode-int encode+ " reg" property
-    3 encode-int " interrupts" property
+    d# 3 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -145,7 +145,7 @@ new-device
     " wii-ehci" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d040000 encode-int 100 encode-int encode+ " reg" property
-    4 encode-int " interrupts" property
+    d# 4 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -160,7 +160,7 @@ new-device
     " wii-ohci" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d050000 encode-int 100 encode-int encode+ " reg" property
-    5 encode-int " interrupts" property
+    d# 5 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -175,7 +175,7 @@ new-device
     " wii-ohci" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d060000 encode-int 100 encode-int encode+ " reg" property
-    6 encode-int " interrupts" property
+    d# 6 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -189,7 +189,7 @@ new-device
     " wii-sdhc" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d070000 encode-int 200 encode-int encode+ " reg" property
-    7 encode-int " interrupts" property
+    d# 7 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
@@ -203,7 +203,7 @@ new-device
     " wii-sdio" encode-string " compatible" property
     " " encode-string " built-in" property
     h# 0d080000 encode-int 200 encode-int encode+ " reg" property
-    8 encode-int " interrupts" property
+    d# 8 encode-int " interrupts" property
     \ C code to populate interrupt-parent property
     external
     : open true ;
