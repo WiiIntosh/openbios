@@ -839,15 +839,16 @@ int ob_wii_shdc_init(const char *path, unsigned long mmio_base) {
     //
     fword("new-device");
     dnode = get_cur_dev();
+    set_int_property(dnode, "reg", 0);
 
-    PUSH(pointer2cell(sdhc));
-    feval("value sdhc");
-
-    push_str("sd_card");
+    push_str("disk");
     fword("device-name");
 
     push_str("block");
     fword("device-type");
+
+    PUSH(pointer2cell(sdhc));
+    feval("value sdhc");
 
     BIND_NODE_METHODS(dnode, ob_wii_sdhc);
     fword("is-deblocker");
