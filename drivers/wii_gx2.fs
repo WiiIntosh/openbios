@@ -28,6 +28,21 @@ h# 1400 constant cafe-line-bytes
 " depth-bits" (find-xt) cell+ value depth-bits-xt
 " line-bytes" (find-xt) cell+ value line-bytes-xt
 
+\
+\ Registers
+\
+
+h# c200000 constant gx2-mmio-base
+h# 80000 constant gx2-mmio-length
+
+\ Default location in MEM2 of framebuffer memory (1280x720x4)
+h# 17500000 constant gx2-tv-fb-base
+h# 384000 constant gx2-tv-fb-length
+
+: gx2-mmio! ( data reg# -- )
+  gx2-mmio-base + l!
+;
+
 external
 
 : color!  ( r g b c# -- )
@@ -37,12 +52,21 @@ external
   2drop
 ;
 
+headerless
+
 \
 \ Installation
 \
 
+" display" device-type
+gx2-mmio-base encode-int gx2-mmio-length encode-int encode+ " reg" property
+
 : wii-gx2-driver-install ( -- )
-  h# 17500000 to frame-buffer-adr
+  \ Configure D1GRPH_SWAP_CNTL for full big endian mode.
+  \ By default A and B are correct, but R and G are swapped.
+  h# 2 h# 610C gx2-mmio!
+
+  gx2-tv-fb-base to frame-buffer-adr
   default-font set-font
 
   frame-buffer-adr encode-int " address" property
