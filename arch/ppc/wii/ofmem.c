@@ -28,7 +28,7 @@
 /* called from assembly */
 extern void dsi_exception(void);
 extern void isi_exception(void);
-extern void setup_mmu(unsigned long code_base);
+extern void setup_mmu(void);
 
 /****************************************************************
  * Memory usage (before of_quiesce is called)
@@ -320,7 +320,7 @@ void isi_exception(void) {
 /*	init / cleanup							*/
 /************************************************************************/
 
-void setup_mmu(unsigned long ramsize) {
+void setup_mmu(void) {
     unsigned long sdr1 = HASH_BASE | ((HASH_SIZE-1) >> 16);
     unsigned long sr_base = (0x20 << 24) | SEGR_BASE;
     unsigned long msr;

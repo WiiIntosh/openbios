@@ -69,21 +69,18 @@
 
 	.section .bss
 	.balign 32
-	.space  32*1024		// 32 K client stack
-client_stack:
-	.space	128
 
 	.space	64*1024		// 64 K stack
-stack:	.space  64
+__stack:	.space  64
 
 	.space  32*1024		// 32 K exception stack
-estack:	.space	128
+__exception_stack:	.space	128
 
 /************************************************************************/
 /*	vectors								*/
 /************************************************************************/
 
-        .section .text.vectors, "ax"
+    .section .text.vectors, "ax"
 GLOBL(__vectors):
     nop			// NULL-jmp trap
 1:	nop			//
@@ -193,17 +190,17 @@ GLOBL(_start):
 
     //
     // Set HID0 to initial state.
-      // HID0 = 00110c64:
+    // HID0 = 00110c64
     // bus checkstops off, sleep modes off,
     // caches off, caches invalidate,
     // store gathering off, enable data cache
     // flush assist, enable branch target cache,
     // enable branch history table
-      //
+    //
     lis   r8, 		0x0011
-      ori   r8, 		r8, 0x0C64
-      mtspr S_HID0,	r8
-      isync
+    ori   r8, 		r8, 0x0C64
+    mtspr S_HID0,	r8
+    isync
 
     //
     // Enable floating-point.
@@ -295,66 +292,52 @@ GLOBL(_start):
     sync
     isync
 
-    /* copy exception vectors */
+    //
+    // Copy exception vectors.
+    //
     LOAD_REG_IMMEDIATE(r3, __vectors)
-
-    lis       r4, 0x8000
-    ori       r4, r4, 0x0100
-
-    lis	r4, 0x8000
-
-     li	r4,0
-     li	r5,__vectors_end - __vectors + 16
-     rlwinm	r5,r5,0,0,28
-1:	lwz	r6,0(r3)
-     lwz	r7,4(r3)
-     lwz	r8,8(r3)
-     lwz	r9,12(r3)
-     stw	r6,0(r4)
-     stw	r7,4(r4)
-     stw	r8,8(r4)
-     stw	r9,12(r4)
-     dcbst	0,r4
-     sync
-     icbi	0,r4
-     sync
-     addi	r5,r5,-16
-     addi	r3,r3,16
-     addi	r4,r4,16
-     cmpwi	r5,0
-     bgt	1b
+    li	    r4,0
+    li	    r5,__vectors_end - __vectors + 16
+    rlwinm	r5,r5,0,0,28
+1:	lwz	    r6,0(r3)
+    lwz	    r7,4(r3)
+    lwz	    r8,8(r3)
+    lwz	    r9,12(r3)
+    stw	    r6,0(r4)
+    stw	    r7,4(r4)
+    stw	    r8,8(r4)
+    stw	    r9,12(r4)
+    dcbst	0,r4
+    sync
+    icbi	0,r4
+    sync
+    addi	r5,r5,-16
+    addi	r3,r3,16
+    addi	r4,r4,16
+    cmpwi	r5,0
+    bgt	1b
     isync
 
-    /* Memory map:
-     *
-     * Top +-------------------------+
-     *     |                         |
-     *     | ROM into RAM (1 MB)     |
-     *     |                         |
-     *     +-------------------------+
-     *     |                         |
-     *     | MMU Hash Table (64 kB)  |
-     *     |                         |
-     *     +-------------------------+
-     *     |                         |
-     *     | Exception Stack (32 kB) |
-     *     |                         |
-     *     +-------------------------+
-     *     |                         |
-     *     | Stack (64 kB)           |
-     *     |                         |
-     *     +-------------------------+
-     *     |                         |
-     *     | Client Stack (64 kB)    |
-     *     |                         |
-     *     +-------------------------+
-     *     |                         |
-     *     | Malloc Zone (2 MiB)     |
-     *     |                         |
-     *     +-------------------------+
-     *     :                         :
-     * Bottom
-     */
+    //
+    // Zero out BSS. The loader running on the IOP does not do this.
+    //
+    LOAD_REG_IMMEDIATE(r3, _bss)
+    LOAD_REG_IMMEDIATE(r5, _ebss)
+    sub     r5, r5, r3
+    addi    r5, r5, 16
+    li      r0, 0
+    rlwinm	r5,r5,0,0,28
+2:  stw     r0, 0(r3)
+    stw     r0, 4(r3)
+    stw     r0, 8(r3)
+    stw     r0, 12(r3)
+    dcbst   0, r3
+    sync
+    addi	r5, r5, -16
+    addi	r3, r3, 16
+    cmpwi	r5, 0
+	bgt	2b
+	isync
 
     //
     // Clear/initialize the L1 and L2 caches.
@@ -422,42 +405,21 @@ l2c_invalidate_loop:
     mtspr	S_L2CR, r3
 
 l2c_ready:
-    // Use all memory, but we'll reserve out the hole between the top 64MB and bottom 24MB.
-    lis r3, 0x0170
-
-    addis	r1, r3, -16		/* ramsize - 1MB */
-
-    /* setup hash table */
-    addis	r1, r1, -1		/* - 64 kB */
-    clrrwi	r1, r1, 5*4		/* & ~0xfffff */
-
-    /* setup exception stack */
-    mtsprg0	r1
-
-    /* setup stack */
-    addi	r1, r1, -32768		/* - 32 kB */
+    //
+    // Configure the stacks.
+    //
+    LOAD_REG_IMMEDIATE(r1, __exception_stack)
+    mtsprg0     r1
+    LOAD_REG_IMMEDIATE(r1, __stack)
 
     //
-    // Zero out BSS.
+    // Configure MMU.
     //
-    LOAD_REG_IMMEDIATE(r3, _bss)
-    LOAD_REG_IMMEDIATE(r5, _ebss)
-    li		r4, 0
-    sub		r5, r5, r3
-    bl		BRANCH_LABEL(memset)
-
-    lis	r1,HA(estack)
-	addi	r1,r1,LO(estack)
-	mtsprg0 r1			// setup exception stack
-	lis	r1,HA(stack)
-	addi	r1,r1,LO(stack)
-
-      lis r3, 0x0170
-
-    /* save memory size in stack */
     bl	BRANCH_LABEL(setup_mmu)
 
-    /* load stack pointer into context */
+    //
+    // Jump into the context.
+    //
     LOAD_REG_IMMEDIATE(r4, __context)
     PPC_LL  r4, 0(r4)
     PPC_STL r1, (2 * ULONG_SIZE)(r4)
