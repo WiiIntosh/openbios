@@ -35,11 +35,11 @@ h# 1400 constant cafe-line-bytes
 h# c200000 constant gx2-mmio-base
 h# 80000 constant gx2-mmio-length
 
-\ Default location in MEM2 of framebuffer memory (1280x720x4)
-h# 17500000 constant gx2-tv-fb-base
-h# 384000 constant gx2-tv-fb-length
+: read-gx2-mmio ( regoffset -- value )
+  gx2-mmio-base + l@
+;
 
-: gx2-mmio! ( data reg# -- )
+: write-gx2-mmio ( value regoffset -- )
   gx2-mmio-base + l!
 ;
 
@@ -62,11 +62,9 @@ headerless
 gx2-mmio-base encode-int gx2-mmio-length encode-int encode+ " reg" property
 
 : wii-gx2-driver-install ( -- )
-  \ Configure D1GRPH_SWAP_CNTL for full big endian mode.
-  \ By default A and B are correct, but R and G are swapped.
-  h# 2 h# 610C gx2-mmio!
-
-  gx2-tv-fb-base to frame-buffer-adr
+  \ Get the TV framebuffer from D1GRPH_PRIMARY_SURFACE_ADDRESS.
+  \ Gamepad framebuffer will remain with Starbuck for logging purposes.
+  h# 6110 read-gx2-mmio to frame-buffer-adr
   default-font set-font
 
   frame-buffer-adr encode-int " address" property
@@ -76,11 +74,13 @@ gx2-mmio-base encode-int gx2-mmio-length encode-int encode+ " reg" property
 ;
 
 : wii-gx2-driver-init
+  \ Set the dictionary properties for the video system.
   cafe-video-height openbios-video-height-xt !
   cafe-video-width openbios-video-width-xt !
   cafe-depth-bits depth-bits-xt !
   cafe-line-bytes line-bytes-xt !
 
+  \ Device-level properties.
   cafe-video-height encode-int " height" property
   cafe-video-width encode-int " width" property
   cafe-depth-bits encode-int " depth" property
