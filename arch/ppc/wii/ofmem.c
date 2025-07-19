@@ -70,6 +70,8 @@ static ofmem_t s_ofmem;
 #define WII_IO_BASE		0x0C000000
 #define WII_MEM2_BASE	0x10000000
 
+#define CAFE_GFX_BASE   0x8F000000
+
 static inline unsigned long get_hash_base(void) {
     return HASH_BASE;
 }
@@ -217,7 +219,7 @@ ucell ofmem_arch_default_translation_mode(phys_addr_t phys) {
 	//
 	if ((phys >= WII_IO_BASE) && (phys < WII_MEM2_BASE))
 		return 0x6a;	/* WIm GxPp, I/O */
-    if (phys >= 0x17500000) // TODO: Gfx memory here, but this is also just regular MEM2 on Wii U.
+    if (phys >= CAFE_GFX_BASE)
         return 0x6a;	/* WIm GxPp, I/O */
     /* XXX: Guard bit not set as it should! */
 	if( phys < IO_BASE || phys >= 0xffc00000)
