@@ -171,7 +171,9 @@
   <object source="wii/methods.c" flags="-I$(SRCDIR)/arch/ppc"/>
   <object source="wii/vfd.c" flags="-I$(SRCDIR)/arch/ppc"/>
   <object source="wii/console.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/macosx/xnu.c" flags="-I$(SRCDIR)/arch/ppc"/>
   <object source="wii/macosx/device_tree.c" flags="-I$(SRCDIR)/arch/ppc"/>
+  <object source="wii/macosx/xnu_version.c" flags="-I$(SRCDIR)/arch/ppc"/>
  </library>
 
  <executable name="openbios-briq.elf" target="target" condition="BRIQ">
