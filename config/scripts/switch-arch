@@ -361,6 +361,7 @@ for ARCH in $arch_list; do
     fi
     if [ "$wii" = "yes" ]; then
         mkdir -p $OBJDIR/target/arch/ppc/wii
+        mkdir -p $OBJDIR/target/arch/ppc/wii/macosx
     fi
     if [ "$xbox" = "yes" ]; then
         mkdir -p $OBJDIR/target/arch/x86/xbox
