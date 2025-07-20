@@ -95,6 +95,14 @@ int is_newworld(void)
     return 1;
 }
 
+int is_wii_rvl(void) {
+    return wii_platform == WII_RVL;
+}
+
+int is_wii_cafe(void) {
+    return wii_platform == WII_CAFE;
+}
+
 void entry(void) {
     uint32_t pvr;
     isa_io_base = 0x80000000;
@@ -106,7 +114,9 @@ void entry(void) {
     wii_platform = ((pvr & 0xFFFF0000) == ESPRESSO_PVR_HIGH) ? WII_CAFE : WII_RVL;
 
 #ifdef CONFIG_DEBUG_CONSOLE
-    init_console(cafe_console_ops);
+    if (is_wii_cafe()) {
+        init_console(cafe_console_ops);
+    }
 #endif
 
     ofmem_init();
@@ -603,7 +613,6 @@ arch_of_init(void)
     /* Allocate 8MB memory at load-base */
     fword("load-base");
     load_base = POP();
-    ofmem_claim_phys(load_base, 0x800000, 0);
     ofmem_claim_virt(load_base, 0x800000, 0);
     ofmem_map(load_base, load_base, 0x800000, 0);
 }

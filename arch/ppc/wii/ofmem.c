@@ -22,6 +22,7 @@
 #include "kernel.h"
 #include "mmutypes.h"
 #include "asm/processor.h"
+#include "wii.h"
 
 #define BIT(n)		(1U << (31 - (n)))
 
@@ -31,20 +32,69 @@ extern void isi_exception(void);
 extern void setup_mmu(void);
 
 /****************************************************************
- * Memory usage (before of_quiesce is called)
+ * Memory usage (before of_quiesce is called) - Wii / Revolution
  *
  *			Physical
  *
  *	0x00000000	Exception vectors
  *	0x00004000	Free space
- *  0x01800000  Memory hole between MEM1 and MEM2
- *  0x10000000  Free space
- *  0x13e00000  Open Firmware (us)
- *  0x13f00000  OF allocations
- *  0x13ff0000  PTE Hash
- *  0x14000000  End of memory
+ *  0x017FFFFF  End of MEM1 free space
+ *  0x10000000  Start of MEM2 free space
+ *  0x11000000  Open Firmware (us)
+ *  0x11100000  OF allocations
+ *  0x111F0000  PTE Hash
+ *  0x11200000  Free space
+ *  0x11600000  Start of MEM2-MEM1 expansion region
+ *  0x13DFFFFF  End of MEM2-MEM1 expansion region
+ *  0x13E00000  XFB and misc region in MEM2
+ *  0x13FFFFFF  End of MEM2
+ * 
+ *			Virtual
  *
- * Allocations grow downwards from 0x13f00000
+ *	0x00000000	Exception vectors
+ *	0x00004000	Free space
+ *  0x03FFFFFF  End of free space
+ *  0x11000000  Open Firmware (us)
+ *  0x11100000  OF allocations
+ *  0x111F0000  PTE Hash
+ *  0x13E00000  XFB and misc region in MEM2
+ *  0x13FFFFFF  End of MEM2
+ *
+ * Allocations grow downwards from 0x11100000
+ *
+ ****************************************************************/
+
+/****************************************************************
+ * Memory usage (before of_quiesce is called) - Wii U / Cafe
+ *
+ *			Physical
+ *
+ *	0x00000000	Exception vectors
+ *	0x00004000	Free space
+ *  0x01FFFFFF  End of MEM1 free space
+ *  0x10000000  Start of MEM2 free space
+ *  0x11000000  Open Firmware (us)
+ *  0x11100000  OF allocations
+ *  0x111F0000  PTE Hash
+ *  0x11200000  Free space
+ *  0x11600000  Start of MEM2-MEM1 expansion region
+ *  0x175FFFFF  End of MEM2-MEM1 expansion region
+ *  0x17600000  Free space
+ *  0x7E000000  GFX memory
+ *  0x7FFFFFFF  End of MEM2
+ * 
+ *			Virtual
+ *
+ *	0x00000000	Exception vectors
+ *	0x00004000	Free space
+ *  0x07FFFFFF  End of free space
+ *  0x11000000  Open Firmware (us)
+ *  0x11100000  OF allocations
+ *  0x111F0000  PTE Hash
+ *  0x7E000000  GFX memory
+ *  0x7FFFFFFF  End of MEM2
+ *
+ * Allocations grow downwards from 0x11100000
  *
  ****************************************************************/
 
@@ -56,7 +106,7 @@ extern void setup_mmu(void);
 #define MEM_HOLE_BASE	0x01800000
 #define FREE_BASE_2		0x10000000
 
-#define OF_CODE_START	0x13E00000
+#define OF_CODE_START	0x11000000
 #define OF_MALLOC_BASE	&_end
 
 #define RAMSIZE			0x14000000
@@ -219,7 +269,7 @@ ucell ofmem_arch_default_translation_mode(phys_addr_t phys) {
 	//
 	if ((phys >= WII_IO_BASE) && (phys < WII_MEM2_BASE))
 		return 0x6a;	/* WIm GxPp, I/O */
-    if (phys >= CAFE_GFX_BASE)
+    if ((is_wii_cafe() && (phys >= CAFE_GFX_BASE)) || (is_wii_rvl() && (phys >= RVL_XFB_BASE)))
         return 0x6a;	/* WIm GxPp, I/O */
     /* XXX: Guard bit not set as it should! */
 	if( phys < IO_BASE || phys >= 0xffc00000)
@@ -343,15 +393,20 @@ void ofmem_init(void) {
     /* In case we can't rely on memory being zero initialized */
     memset(ofmem, 0, sizeof (*ofmem));
 
-    ofmem->ramsize = RAMSIZE;
+    if (is_wii_rvl()) {
+        ofmem->ramsize = 0x4000000; // 64MB virtual.
+    } else if (is_wii_cafe()) {
+        ofmem->ramsize = 0x8000000; // 128MB virtual.
+    }
 
     ofmem_claim_phys(0, FREE_BASE_1, 0);
     ofmem_claim_virt(0, FREE_BASE_1, 0);
-    ofmem_claim_phys(MEM_HOLE_BASE, FREE_BASE_2 - MEM_HOLE_BASE, 0);
-    ofmem_claim_phys(OF_CODE_START, RAMSIZE - OF_CODE_START, 0);
-    ofmem_claim_virt(OF_CODE_START, RAMSIZE - OF_CODE_START, 0);
-        
 
-    ofmem_claim_phys( 0x1000000, 640 * 480 * 2, 0 );
-    ofmem_claim_virt( 0x1000000, 640 * 480 * 2, 0 );
+    if (is_wii_rvl()) {
+        ofmem_map(0x4000, 0x4000, 0x01800000 - 0x4000, 0);
+        ofmem_map(0x11600000, 0x01800000, 0x02800000, 0);
+    } else if (is_wii_cafe()) {
+        ofmem_map(0x4000, 0x4000, 0x02000000 - 0x4000, -1);
+        ofmem_map(0x11600000, 0x02000000, 0x06000000, -1);
+    }
 }

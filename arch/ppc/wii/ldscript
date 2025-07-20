@@ -3,11 +3,11 @@ OUTPUT_ARCH(powerpc:common)
 
 /* Initial load address
  */
-BASE_ADDR = 0x13E00000;
+BASE_ADDR = 0x11000000;
 
 /* As NVRAM is at 0xfff04000, the .text needs to be after that
  */
-TEXT_ADDR = 0x13E08000;
+TEXT_ADDR = 0x11008000;
 
 CSTACK_SIZE = 32768;	/* client stack size */
 

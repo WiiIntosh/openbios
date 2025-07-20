@@ -15,9 +15,17 @@
 #ifndef _H_WII
 #define _H_WII
 
+#define ARRSIZE(x)    (sizeof(x) / (sizeof(x[0])))
+
 /* vfd.c */
 extern int		vfd_draw_str( const char *str );
 extern void		vfd_close( void );
+
+//
+// Wii platform types.
+//
+extern int is_wii_rvl(void);
+extern int is_wii_cafe(void);
 
 #define ESPRESSO_PVR_HIGH       0x70010000
 
@@ -43,6 +51,8 @@ extern void		vfd_close( void );
 #define WII_DEVICE_TREE_LATTE_BASE              0x0D800440
 #define WII_DEVICE_TREE_LATTE_LENGTH            0x48
 #define WII_DEVICE_TREE_LATTE_IRQ               24
+
+#define RVL_XFB_BASE            0x13E00000
 
 #include "kernel.h"
 
