@@ -70,6 +70,10 @@
 	.section .bss
 	.balign 32
 
+    .space  32*1024		// 32 K client stack
+GLOBL(__client_stack):
+	.space	128
+
 	.space	64*1024		// 64 K stack
 __stack:	.space  64
 

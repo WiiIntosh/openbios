@@ -125,7 +125,7 @@ arch_init_program(void)
        doesn't have a 1:1 virt to phys mapping. So for the moment we use
        the original (pre-context) location just under the MMU hash table
        (SDR1) which is mapped 1:1 and makes the bootloader happy. */
-    ctx->sp = mfsdr1() - 32768 - 65536;
+   // ctx->sp = mfsdr1() - 32768 - 65536; // TODO: Needs to be looked at
 
     /* Set param */
     feval("load-state >ls.param @");
