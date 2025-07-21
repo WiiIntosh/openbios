@@ -17,9 +17,6 @@
 #include "macho-loader.h"
 #include "macosx.h"
 #include "mkext.h"
-#include "xnu.h"
-
-//#include "Wiimkext.h"
 
 #define BOOTX_VERBOSE
 
@@ -60,48 +57,6 @@ static int obp_devseek(phandle_t ph, int hi, int lo) {
     ret = POP();
 
     return ret;
-}
-
-//
-// Gets the highest virtual address in the Mach-O binary.
-//
-unsigned long macho_get_top(void *macho) {
-    struct mach_header      *machHeader;
-    char                    *commandPtr;
-    struct load_command     *loadCommand;
-    struct segment_command  *segCommand; 
-    unsigned long           machTop;
-
-    //
-    // Check the header.
-    //
-    machHeader = (struct mach_header*)macho;
-    if (machHeader->magic != MH_MAGIC) {
-        printk("Not a macho at %p\n", macho);
-        return 0;
-    }
-
-    //
-    // Iterate through commands and get highest virtual address.
-    //
-    machTop = 0;
-    commandPtr = (char*)(machHeader + 1);
-    for (int i = 0; i < machHeader->ncmds; i++) {
-        loadCommand = (struct load_command*)commandPtr;
-
-        switch (loadCommand->cmd) {
-            case LC_SEGMENT:
-                segCommand = (struct segment_command*)loadCommand;
-                if ((segCommand->vmaddr + segCommand->vmsize) > machTop) {
-                    machTop = segCommand->vmaddr + segCommand->vmsize;
-                }
-                break;
-        }
-
-        commandPtr += loadCommand->cmdsize; 
-    }
-
-    return machTop;
 }
 
 //
