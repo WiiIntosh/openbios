@@ -26,6 +26,7 @@
 #include "libopenbios/ofmem.h"
 #include "arch/ppc/processor.h"
 #include "drivers/usb.h"
+#include "macosx/macosx.h"
 
 /************************************************************************/
 /*	RTAS (run-time abstraction services)				*/
@@ -115,6 +116,11 @@ ciface_quiesce( unsigned long args[], unsigned long ret[] )
 {
     printk("OF quiesce was called\n");
     usb_exit();
+
+    if (macosx_check_bootx()) {
+        printk("Handling Mac OS X patching/injection\n");
+        macosx_patch();
+    }
 }
 
 /* ( -- ms ) */
