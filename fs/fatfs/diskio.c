@@ -12,9 +12,9 @@
 
 #include "config.h"
 #include "libopenbios/bindings.h"
-#include "libc/diskio.h"
+#include "os.h"
 
-#define SECTOR_SIZE		512
+#define FAT_BLOCKSZ_BITS       9	/* 1<<9 == 512  */
 
 //
 // Override disk offset for probe.
@@ -58,11 +58,8 @@ DRESULT disk_read (
 	UINT count		/* Number of sectors to read */
 )
 {
-	printk("fat disk_read pdrv %u, sector %u, count %u\n", pdrv, sector, count);
-
-	seek_io(pdrv, fatfs_disk_offset + (sector * SECTOR_SIZE));
-	read_io(pdrv, buff, count * SECTOR_SIZE);
-
+	os_seek_offset(pdrv, sector * (1 << FAT_BLOCKSZ_BITS) + fatfs_disk_offset);
+	os_read(pdrv, buff, count, FAT_BLOCKSZ_BITS);
 	return RES_OK;
 }
 

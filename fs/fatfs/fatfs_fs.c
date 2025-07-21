@@ -62,10 +62,10 @@ fatfs_files_open(fatfs_info_t *mi)
     char    *path = my_args_copy();
     char    buf[256];
 
-    if (!path)
-        RET( 0 );
+    if (!path) {
+        RET(0);
+    }
 
-    printk("fatfs_files_open %s\n", path);
     fd = open_ih(my_parent());
     if (fd == -1) {
         free(path);
@@ -74,7 +74,6 @@ fatfs_files_open(fatfs_info_t *mi)
     mi->fd = fd;
 
     snprintf(mi->vol_path, sizeof (mi->vol_path), "%d:", fd);
-    printk("vol %s\n", mi->vol_path);
     if (f_mount(&mi->fs, mi->vol_path, 1) != FR_OK) {
         free(path);
         close_io(fd);
@@ -82,7 +81,6 @@ fatfs_files_open(fatfs_info_t *mi)
     }
 
     snprintf(buf, sizeof (buf), "%d:%s", fd, path);
-    printk("path %s\n", buf);
     if (f_opendir(&mi->dir, buf) != FR_OK) {
         if (f_open(&mi->file, buf, FA_READ) != FR_OK) {
             free(path);
@@ -103,8 +101,6 @@ fatfs_files_open(fatfs_info_t *mi)
 static void
 fatfs_files_close(fatfs_info_t *mi)
 {
-    printk("fatfs_files_close\n");
-
     if (mi->type == FAT_FILE) {
         f_close(&mi->file);
     } else if (mi->type == FAT_DIR) {
@@ -122,8 +118,6 @@ fatfs_files_read(fatfs_info_t *mi)
     int count = POP();
     char *buf = (char *)cell2pointer(POP());
     UINT br;
-
-    printk("fatfs_files_read %u\n", count);
 
     if (mi->type != FAT_FILE) {
         RET(-1);
@@ -154,7 +148,6 @@ fatfs_files_seek(fatfs_info_t *mi)
 static void
 fatfs_files_load(fatfs_info_t *mi)
 {
-    printk("fatfs_files_load\n");
     char *buf = (char*)cell2pointer(POP());
     UINT br;
 
@@ -187,17 +180,15 @@ fatfs_files_dir(fatfs_info_t *dummy)
         free(path);
         return;
     }
-    snprintf(buf, sizeof (buf), "%d:", fd);
-    printk("path %s\n", buf);
 
+    snprintf(buf, sizeof (buf), "%d:", fd);
     if (f_mount(&fs, buf, 1) != FR_OK) {
         free(path);
         close_io(fd);
         return;
     }
-    snprintf(buf, sizeof (buf), "%d:%s", fd, (path != NULL) ? path : "\\");
-    printk("path %s\n", buf);
 
+    snprintf(buf, sizeof (buf), "%d:%s", fd, (path != NULL) ? path : "\\");
     if (f_opendir(&dir, buf) != FR_OK) {
         free(path);
         close_io(fd);
@@ -211,7 +202,7 @@ fatfs_files_dir(fatfs_info_t *dummy)
             break;
         }
 
-        forth_printf("% 10d ", fno.fsize);
+        forth_printf("% 10lld ", fno.fsize);
         print_date(fno.fdate, fno.ftime);
         if (fno.fattrib & AM_DIR) {
             forth_printf("%s\\\n", fno.fname);
@@ -222,7 +213,7 @@ fatfs_files_dir(fatfs_info_t *dummy)
     }
 
     f_closedir(&dir);
-    f_unmount("");
+    f_unmount(buf);
 
     close_io(fd);
 
@@ -236,16 +227,19 @@ fatfs_files_probe(fatfs_info_t *dummy)
     ihandle_t ih = POP_ih();
     long long offs = DPOP();
     int fd, ret = 0;
-    FATFS   fs;
+    FATFS   *fs;
     char    buf[16];
 
-    printk("fatfs_files_probe offset %lld\n", offs);
+    fs = malloc(sizeof (FATFS));
+    if (!fs) {
+        RET(ret);
+    }
+
     fd = open_ih(ih);
     if (fd >= 0) {
         snprintf(buf, sizeof (buf), "%d:", fd);
-        printk("vol %s\n", buf);
         fatfs_disk_offset = offs;
-        if (f_mount(&fs, buf, 1) == FR_OK) {
+        if (f_mount(fs, buf, 1) == FR_OK) {
             f_unmount(buf);
             ret = -1;
         }
@@ -255,8 +249,8 @@ fatfs_files_probe(fatfs_info_t *dummy)
         ret = -1;
     }
 
-    printk("fatfs_files_probe ret: %d\n", ret);
-    RET (ret);
+    free(fs);
+    RET(ret);
 }
 
 static void
