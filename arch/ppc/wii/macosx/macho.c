@@ -10,7 +10,6 @@
  */
 
 #include "config.h"
-#include "libopenbios/bindings.h"
 #include "macho-loader.h"
 #include "macosx.h"
 #include "nlist.h"
@@ -55,10 +54,11 @@ unsigned long macho_get_top(void *macho) {
     return machTop;
 }
 
-
+//
+// Resolves a symbol from a Mach-O binary.
+//
 unsigned long macho_resolve_symbol(macho_sym_context_t *context, const char *symbolName) {
-    const char    *symStr;
-
+    const char *symStr;
     for (unsigned long i = 0; i < context->symbol_count; i++) {
         //
         // Get the symbol string for the symbol.

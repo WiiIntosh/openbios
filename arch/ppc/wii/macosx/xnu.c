@@ -16,8 +16,6 @@
 #include "nlist.h"
 #include "../wii.h"
 
-#define XNU_REGION_START        0x4000
-
 static int xnu_get_symtab(macho_sym_context_t *symContext) {
     phandle_t   memory_map;
     uint32_t*   prop;
