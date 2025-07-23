@@ -93,31 +93,6 @@ static int xnu_patch_cpu_check(macho_sym_context_t *symContext) {
 }
 
 //
-// Patch PE_find_scc to return 0.
-//
-static int xnu_patch_find_scc(macho_sym_context_t *symContext) {
-    unsigned long   kern_sym_pe_find_scc;
-    uint32_t        *func;
-
-    //
-    // Get _PE_find_scc function location.
-    //
-    kern_sym_pe_find_scc = macho_resolve_symbol(symContext, "_PE_find_scc");
-    if (kern_sym_pe_find_scc == 0) {
-        return 0;
-    }
-    func = (uint32_t*)kern_sym_pe_find_scc;
-
-    //
-    // Patch to return 0. This function calls _get_io_base_addr which will panic.
-    //
-    func[0] = 0x38600000;
-    func[1] = 0x4E800020;
-    printk("xnu_patch_cpu_check: patched _PE_find_scc at %p\n", func);
-    return 1;
-}
-
-//
 // Patch the BAT setup to avoid conflicts with other BATs for the video DBAT3, and prevent DBAT2 from being filled.
 //
 static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
@@ -213,6 +188,31 @@ static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
     return 1;
 }
 
+//
+// Patch function to return 0.
+//
+static int xnu_patch_disable_function(macho_sym_context_t *symContext, const char* funcName) {
+    unsigned long   sym;
+    uint32_t        *func;
+
+    //
+    // Get _PE_find_scc function location.
+    //
+    sym = macho_resolve_symbol(symContext, funcName);
+    if (sym == 0) {
+        return 0;
+    }
+    func = (uint32_t*)sym;
+
+    //
+    // Set r3 to 0 and return right away.
+    //
+    func[0] = 0x38600000;
+    func[1] = 0x4E800020;
+
+    return 1;
+}
+
 int xnu_patch(void) {
     macho_sym_context_t kernel_syms;
     uint32_t            xnu_version;
@@ -231,7 +231,7 @@ int xnu_patch(void) {
     }
     printk("XNU version: 0x%X\n", xnu_version);
 
-    if (!xnu_patch_find_scc(&kernel_syms)) {
+    if (!xnu_patch_disable_function(&kernel_syms, "_PE_find_scc")) {
         return 0;
     }
 
