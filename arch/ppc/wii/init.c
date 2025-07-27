@@ -586,7 +586,7 @@ arch_of_init(void)
     //
     // Initialize OHCI controller for keyboard support.
     //
-    push_str("/ohc0");
+    push_str("/usb@0d050000");
     fword("find-device");
     dnode = get_cur_dev();
     ob_usb_ohci_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));

@@ -88,7 +88,7 @@ variable keyboard-phandle 0 keyboard-phandle !
   \ DT root
   " /" find-device
   " Wii" model
-  " Wii" encode-string " WiiRISC" encode-string encode+ " compatible" property
+  " Wii" encode-string " NTDOY,Revolution" encode-string encode+ " compatible" property \ TODO: System Profiler takes the first string in compatible
   h# e7be2c0 encode-int " clock-frequency" property
 
   \ Platform interrupt controller MMIO
@@ -98,47 +98,47 @@ variable keyboard-phandle 0 keyboard-phandle !
   \ Create Hollywood interrupt controller
   " /" find-device
   new-device
-    " hollywood-pic" device-name
+    " interrupt-controller" device-name
     " interrupt-controller" device-type
-    " Wii,Hollywood" model
-    " wii-hollywood" encode-string " compatible" property
+    " NTDOY,hlwd-pic" model
+    " NTDOY,hlwd-pic" encode-string " compatible" property
     " " encode-string " built-in" property
     " " encode-string " interrupt-controller" property
     1 encode-int " #interrupt-cells" property
     h# 0d000030 encode-int 10 encode-int encode+ " reg" property
     d# 14 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
+    " /interrupt-controller@0c003000" find-dev if
       encode-int " interrupt-parent" property
     then
   finish-device
 
   \ Set Hollywood as interrupt controller parent on Wii hardware devices
   " /aes" find-device
-  " /hollywood-pic" find-dev if
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sha" find-device
-  " /hollywood-pic" find-dev if
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ehc0" find-device
-  " /hollywood-pic" find-dev if
+  " /usb@0d040000" find-device
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ohc0" find-device
-  " /hollywood-pic" find-dev if
+  " /usb@0d050000" find-device
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ohc1" find-device
-  " /hollywood-pic" find-dev if
+  " /usb@0d060000" find-device
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdhc" find-device
-  " /hollywood-pic" find-dev if
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdio" find-device
-  " /hollywood-pic" find-dev if
+  " /interrupt-controller@0d000030" find-dev if
     encode-int " interrupt-parent" property
   then
 
@@ -151,8 +151,8 @@ variable keyboard-phandle 0 keyboard-phandle !
 
   \ DT root
   " /" find-device
-  " Wii U" model
-  " Wii U" encode-string " WiiRISC" encode-string encode+ " compatible" property
+  " NTDOY,Cafe" model
+  " WiiU" encode-string " NTDOY,Cafe" encode-string encode+ " compatible" property \ TODO: System Profiler takes the first string in compatible
   h# ed1b768 encode-int " clock-frequency" property
 
   \ Platform interrupt controller MMIO
@@ -162,47 +162,47 @@ variable keyboard-phandle 0 keyboard-phandle !
   \ Create Latte interrupt controller
   " /" find-device
   new-device
-    " latte-pic" device-name
+    " interrupt-controller" device-name
     " interrupt-controller" device-type
-    " Wii,Latte" model
-    " wii-latte" encode-string " compatible" property
+    " NTDOY,latte-pic" model
+    " NTDOY,latte-pic" encode-string " compatible" property
     " " encode-string " built-in" property
     " " encode-string " interrupt-controller" property
     1 encode-int " #interrupt-cells" property
     h# 0d800440 encode-int 48 encode-int encode+ " reg" property
     d# 24 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
+    " /interrupt-controller@0c000000" find-dev if
       encode-int " interrupt-parent" property
     then
   finish-device
 
   \ Set Latte as interrupt controller parent on Wii hardware devices
   " /aes" find-device
-  " /latte-pic" find-dev if
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sha" find-device
-  " /latte-pic" find-dev if
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ehc0" find-device
-  " /latte-pic" find-dev if
+  " /usb@0d040000" find-device
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ohc0" find-device
-  " /latte-pic" find-dev if
+  " /usb@0d050000" find-device
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
-  " /ohc1" find-device
-  " /latte-pic" find-dev if
+  " /usb@0d060000" find-device
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdhc" find-device
-  " /latte-pic" find-dev if
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdio" find-device
-  " /latte-pic" find-dev if
+  " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
 
@@ -211,11 +211,11 @@ variable keyboard-phandle 0 keyboard-phandle !
   " /" find-device
   new-device
     " gx2" device-name
-    " Wii,GX2" model
-    " wii-gx2" encode-string " compatible" property
+    " NTDOY,gx2" model
+    " NTDOY,gx2" encode-string " compatible" property
     " " encode-string " built-in" property
     d# 2 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
+    " /interrupt-controller@0c000000" find-dev if
       encode-int " interrupt-parent" property
     then
   finish-device
