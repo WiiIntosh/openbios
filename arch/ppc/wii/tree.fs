@@ -100,6 +100,70 @@ new-device
     : close ;
 finish-device
 
+\ Serial interface
+new-device
+    " si" device-name
+    " NTDOY,si" model
+    " NTDOY,si" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0d006400 encode-int 100 encode-int encode+ " reg" property
+    d# 3 encode-int " interrupts" property
+    " /interrupt-controller" find-dev if
+      encode-int " interrupt-parent" property
+    then
+    external
+    : open true ;
+    : close ;
+finish-device
+
+\ External interface
+new-device
+    " exi" device-name
+    " NTDOY,exi" model
+    " NTDOY,exi" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0d006800 encode-int 40 encode-int encode+ " reg" property
+    d# 4 encode-int " interrupts" property
+    " /interrupt-controller" find-dev if
+      encode-int " interrupt-parent" property
+    then
+    external
+    : open true ;
+    : close ;
+finish-device
+
+\ Audio interface
+new-device
+    " audio-controller" device-name
+    " NTDOY,audio" model
+    " NTDOY,audio" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0d006c00 encode-int 20 encode-int encode+ " reg" property
+    d# 5 encode-int " interrupts" property
+    " /interrupt-controller" find-dev if
+      encode-int " interrupt-parent" property
+    then
+    external
+    : open true ;
+    : close ;
+finish-device
+
+\ DSP
+new-device
+    " dsp" device-name
+    " NTDOY,dsp" model
+    " NTDOY,dsp" encode-string " compatible" property
+    " " encode-string " built-in" property
+    \ Fcode to populate reg property
+    d# 6 encode-int " interrupts" property
+    " /interrupt-controller" find-dev if
+      encode-int " interrupt-parent" property
+    then
+    external
+    : open true ;
+    : close ;
+finish-device
+
 \ AES engine
 new-device
     " aes" device-name

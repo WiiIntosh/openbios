@@ -95,6 +95,10 @@ variable keyboard-phandle 0 keyboard-phandle !
   " /interrupt-controller" find-device
   h# 0c003000 encode-int 8 encode-int encode+ " reg" property
 
+  \ DSP MMIO
+  " /dsp" find-device
+  h# 0c005000 encode-int 200 encode-int encode+ " reg" property
+
   \ Create Hollywood interrupt controller
   " /" find-device
   new-device
@@ -158,6 +162,10 @@ variable keyboard-phandle 0 keyboard-phandle !
   \ Platform interrupt controller MMIO
   " /interrupt-controller" find-device
   h# 0c000000 encode-int 100 encode-int encode+ " reg" property
+
+  \ DSP MMIO
+  " /dsp" find-device
+  h# 0c280000 encode-int 200 encode-int encode+ " reg" property
 
   \ Create Latte interrupt controller
   " /" find-device
