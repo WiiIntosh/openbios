@@ -212,10 +212,6 @@ int macosx_patch(void) {
 
     //flush_dcache_range((char*)xnu_boot_args, ((char*)xnu_boot_args) + sizeof (boot_args));
 
-   // *((uint32_t*)(((uint8_t*)0) + 0x00095bc4)) = 0x4E800020; // 10.4.6
-  //*((uint32_t*)(((uint8_t*)0) + 0x00095668)) = 0x4E800020; // 10.4.6 
-  //*((uint32_t*)(((uint8_t*)0) + 0x000c7bdc)) = 0x4E800020; // 10.4.6
-
 
     xnu_patch();
 
@@ -250,10 +246,6 @@ int macosx_patch(void) {
 
 
     printk("all flushed 0X%X\n", *((uint32_t*)0x00382bb4));
-
-   // *((uint32_t*)(((uint8_t*)0)  + 0x00085d00)) = 0x4E800020; // 10.2 
-   // *((uint32_t*)(((uint8_t*)0) + 0x0008588c)) = 0x4E800020; // 10.2  
-  //  *((uint32_t*)(((uint8_t*)0) + 0x000a182c)) = 0x4E800020; // 10.2
 
     return 0;
 }

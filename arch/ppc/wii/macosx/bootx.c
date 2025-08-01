@@ -74,10 +74,12 @@ int macosx_patch_bootx(char *base, unsigned long length) {
     int is_bootx;
 
     static const char bootx_log_find[] = "\n\nMac OS X Loader";
+    static const char bootx_kernelcache_find[] = "kernelcache.%08lX";
     static const char bootx_msr_find[] = { 0x38, 0x00, 0x10, 0x00 };
     static const char bootx_msr_repl[] = { 0x38, 0x00, 0x10, 0x30 };
 
     int found_verbose;
+    static const char bootx_kernelcache_repl[] = "zznoprelink.%08lX";
     static const char bootx_verbose_find1[] = { 0x38, 0x60, 0x00, 0x10, 0x48 };
     static const char bootx_verbose_find2[] = { 0x38, 0x60, 0x00, 0x00 }; 
     static const char bootx_verbose_repl2[] = { 0x38, 0x60, 0x00, 0x10 }; 
@@ -107,6 +109,17 @@ int macosx_patch_bootx(char *base, unsigned long length) {
         if (memcmp(&base[i], bootx_msr_find, sizeof (bootx_msr_find)) == 0) {
             memcpy(&base[i], bootx_msr_repl, sizeof (bootx_msr_repl));
             printk("Patched BootX MSR pattern at %p\n", &base[i]);
+        }
+    }
+
+    //
+    // Prevent prelinked kernelcache from being loaded, the supplemental mkext cannot be linked in that state.
+    //
+    for (int i = 0; i < length - sizeof (bootx_kernelcache_find); i++) {
+        if (memcmp(&base[i], bootx_kernelcache_find, sizeof (bootx_kernelcache_find)) == 0) {
+            memcpy(&base[i], bootx_kernelcache_repl, sizeof (bootx_kernelcache_repl));
+            printk("Patched BootX kernelcache pattern at %p\n", &base[i]);
+            break;
         }
     }
 
