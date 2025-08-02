@@ -105,11 +105,12 @@ extern void setup_mmu(void);
 #define FREE_BASE_1		0x00004000
 #define MEM_HOLE_BASE	0x01800000
 #define FREE_BASE_2		0x10000000
+#define FREE_BASE_3		0x11200000
 
 #define OF_CODE_START	0x11000000
 #define OF_MALLOC_BASE	&_end
 
-#define HASH_BASE		(0x11200000 - HASH_SIZE)
+#define HASH_BASE		(FREE_BASE_3 - HASH_SIZE)
 
 static ofmem_t s_ofmem;
 
@@ -288,7 +289,7 @@ static phys_addr_t ea_to_phys(unsigned long ea, ucell *mode) {
     ucell phys;
 
     /* hardcode our translation needs */
-    if( ea >= OF_CODE_START && ea < FREE_BASE_2 ) {
+    if( ea >= OF_CODE_START && ea < FREE_BASE_3 ) {
         *mode = ofmem_arch_default_translation_mode( ea );
         return ea;
     }
@@ -401,10 +402,10 @@ void ofmem_init(void) {
     ofmem_claim_virt(0, FREE_BASE_1, 0);
 
     if (is_wii_rvl()) {
-        ofmem_map(0x4000, 0x4000, 0x01800000 - 0x4000, 0);
+        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x01800000 - FREE_BASE_1, 0);
         ofmem_map(0x11600000, 0x01800000, 0x02800000, 0);
     } else if (is_wii_cafe()) {
-        ofmem_map(0x4000, 0x4000, 0x02000000 - 0x4000, -1);
+        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x02000000 - FREE_BASE_1, -1);
         ofmem_map(0x11600000, 0x02000000, 0x06000000, -1);
     }
 }
