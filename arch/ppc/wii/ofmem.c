@@ -109,8 +109,7 @@ extern void setup_mmu(void);
 #define OF_CODE_START	0x11000000
 #define OF_MALLOC_BASE	&_end
 
-#define RAMSIZE			0x14000000
-#define HASH_BASE		(RAMSIZE - HASH_SIZE)
+#define HASH_BASE		(0x11200000 - HASH_SIZE)
 
 static ofmem_t s_ofmem;
 
@@ -390,7 +389,6 @@ void setup_mmu(void) {
 
 void ofmem_init(void) {
     ofmem_t *ofmem = OFMEM;
-    /* In case we can't rely on memory being zero initialized */
     memset(ofmem, 0, sizeof (*ofmem));
 
     if (is_wii_rvl()) {
