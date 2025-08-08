@@ -228,6 +228,20 @@ variable keyboard-phandle 0 keyboard-phandle !
     then
   finish-device
 
+  \ IPC
+  " /" find-device
+  new-device
+    " ipc" device-name
+    " NTDOY,ipc" model
+    " NTDOY,ipc" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0d800000 encode-int 10 encode-int encode+ " reg" property
+    d# 30 encode-int " interrupts" property
+    " /interrupt-controller@0d800440" find-dev if
+      encode-int " interrupt-parent" property
+    then
+  finish-device
+
   active-package!
 ;
 
