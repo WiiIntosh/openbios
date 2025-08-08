@@ -59,7 +59,6 @@ headerless
 \
 
 " display" device-type
-gx2-mmio-base encode-int gx2-mmio-length encode-int encode+ " reg" property
 
 : wii-gx2-driver-install ( -- )
   \ Get the TV framebuffer from D1GRPH_PRIMARY_SURFACE_ADDRESS.
@@ -68,6 +67,10 @@ gx2-mmio-base encode-int gx2-mmio-length encode-int encode+ " reg" property
   default-font set-font
 
   frame-buffer-adr encode-int " address" property
+  frame-buffer-adr encode-int h# 384000 encode-int encode+ " AAPL,vram-memory" property
+  gx2-mmio-base encode-int gx2-mmio-length encode-int encode+
+    frame-buffer-adr encode-int encode+ h# 384000 encode-int encode+
+    " reg" property
 
   cafe-video-width cafe-video-height over char-width / over char-height /
   fb8-install
