@@ -71,14 +71,16 @@
 	.balign 32
 
     .space  32*1024		// 32 K client stack
-GLOBL(__client_stack):
+__client_stack:
 	.space	128
 
 	.space	64*1024		// 64 K stack
-__stack:	.space  64
+__stack:
+    .space  64
 
 	.space  32*1024		// 32 K exception stack
-__exception_stack:	.space	128
+__exception_stack:
+    .space	128
 
 /************************************************************************/
 /*	vectors								*/
@@ -432,12 +434,6 @@ l2c_ready:
 1:	nop
     b	1b
 
-        .data
-_GLOBAL(saved_stack):
-        DATA_LONG(0)
-
-        .previous
-
 #define STKOFF 8
 #define SAVE_SPACE 144
 
@@ -451,9 +447,8 @@ GLOBL(of_client_callback):
     mflr	r4
     PPC_STL r4, PPC_LR_STKOFF(r1)
 
-    /* restore OF stack */
-    LOAD_REG_IMMEDIATE(r4, saved_stack)
-    PPC_LL  r4, 0(r4)
+    /* switch to OF stack */
+    LOAD_REG_IMMEDIATE(r4, __client_stack)
 
     PPC_STLU r4, -SAVE_SPACE(r4)
     PPC_STL  r1, (STKOFF)(r4)	// save caller stack
