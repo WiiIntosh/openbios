@@ -206,7 +206,13 @@ int macosx_patch(void) {
         xnu_boot_args->PhysicalDRAM[1].size = 0x7E000000; // 2016MB MEM2
     }
 
+    //
+    // Perform XNU patches and flush everything.
+    //
     xnu_patch();
+    flush_dcache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
+    flush_icache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
+
     printk("XNU ready to boot\n");
     return 1;
 }
