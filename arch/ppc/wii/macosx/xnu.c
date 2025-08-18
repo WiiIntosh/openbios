@@ -16,6 +16,22 @@
 #include "nlist.h"
 #include "../wii.h"
 
+//
+// Patches XNU to prevent extra prints from occuring (stacktrace) on panic.
+// Useful for Wii's constrained screen space.
+//
+#define XNU_DISABLE_DEBUG_STACKTRACE    0
+
+//
+// Patches XNU to prevent double character prints on panic in 10.4.
+//
+#define XNU_DISABLE_CONSDEBUG_PUTC      0
+
+//
+// Patches XNU color table for Wii.
+//
+#define XNU_PATCH_COLORTABLE            0
+
 static int xnu_get_symtab(macho_sym_context_t *symContext) {
     phandle_t   memory_map;
     uint32_t*   prop;
@@ -213,6 +229,80 @@ static int xnu_patch_disable_function(macho_sym_context_t *symContext, const cha
     return 1;
 }
 
+#if XNU_DISABLE_CONSDEBUG_PUTC
+static int xnu_patch_consdebug_putc(macho_sym_context_t *symContext) {
+    unsigned long   sym;
+    char            *base;
+
+    static const char debugFind[] = {
+        0x2F, 0x83, 0x00, 0x00,
+        0x40, 0x9E
+    };
+    static const char debugRepl[] = {
+        0x2F, 0x83, 0x00, 0x00,
+        0x48, 0x00
+    };
+
+    //
+    // Get _consdebug_putc function location.
+    //
+    sym = macho_resolve_symbol(symContext, "_consdebug_putc");
+    if (sym == 0) {
+        return 0;
+    }
+    base = (char*)sym;
+
+    //
+    // Look for pattern.
+    //
+    for (int i = 0; i < 0x4000; i++, base++) {
+        if (memcmp(base, debugFind, sizeof (debugFind)) == 0) {
+            memcpy(base, debugRepl, sizeof (debugRepl));
+            return 1;
+        }
+    }
+
+    printk("xnu_patch_consdebug_putc: failed to locate patch pattern\n");
+    return 0;
+}
+#endif
+
+#if XNU_PATCH_COLORTABLE
+typedef struct {
+  uint32_t bit8;
+  uint32_t bit16;
+  uint32_t bit32;
+} xnu_color_table_entry_t;
+
+static int xnu_patch_colortable(macho_sym_context_t *symContext) {
+    unsigned long               sym;
+    xnu_color_table_entry_t     *colorTable;
+
+    //
+    // Get _vc_colors structure location.
+    //
+    sym = macho_resolve_symbol(symContext, "_vc_colors");
+    if (sym == 0) {
+        return 0;
+    }
+    colorTable = (xnu_color_table_entry_t*)sym;
+
+    //
+    // Patch colors to be YUV-equivalents.
+    //
+    colorTable[0].bit8 = colorTable[0].bit16 = colorTable[0].bit32 = 0x10801080;
+    colorTable[1].bit8 = colorTable[1].bit16 = colorTable[1].bit32 = 0x316D31B8;
+    colorTable[2].bit8 = colorTable[2].bit16 = colorTable[2].bit32 = 0x515B5151;
+    colorTable[3].bit8 = colorTable[3].bit16 = colorTable[3].bit32 = 0x71487189;
+    colorTable[4].bit8 = colorTable[4].bit16 = colorTable[4].bit32 = 0x1DB81D77;
+    colorTable[5].bit8 = colorTable[5].bit16 = colorTable[5].bit32 = 0x3DA53DAF;
+    colorTable[6].bit8 = colorTable[6].bit16 = colorTable[6].bit32 = 0x5D935D48;
+    colorTable[7].bit8 = colorTable[7].bit16 = colorTable[7].bit32 = 0xB580B580;
+
+    return 1;
+}
+#endif
+
 int xnu_patch(void) {
     macho_sym_context_t kernel_syms;
     uint32_t            xnu_version;
@@ -246,6 +336,27 @@ int xnu_patch(void) {
             return 0;
         }
     }
+
+    //
+    // Clean up for panics.
+    //
+#if XNU_DISABLE_DEBUG_STACKTRACE
+    xnu_patch_disable_function(&kernel_syms, "_Debugger");
+    xnu_patch_disable_function(&kernel_syms, "_print_backtrace");
+    xnu_patch_disable_function(&kernel_syms, "_draw_panic_dialog");
+#endif
+
+#if XNU_DISABLE_CONSDEBUG_PUTC
+    if (xnu_match_darwin_version(xnu_version, XNU_VERSION_TIGER_MIN, XNU_VERSION_TIGER_MAX)) {
+        xnu_patch_consdebug_putc(&kernel_syms);
+    }
+#endif
+
+#if XNU_PATCH_COLORTABLE
+    if (is_wii_rvl()) {
+        xnu_patch_colortable(&kernel_syms);
+    }
+#endif
     
     return 1;
 }
