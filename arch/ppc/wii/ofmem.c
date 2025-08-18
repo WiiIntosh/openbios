@@ -402,8 +402,8 @@ void ofmem_init(void) {
     ofmem_claim_virt(0, FREE_BASE_1, 0);
 
     if (is_wii_rvl()) {
-        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x01800000 - FREE_BASE_1, 0);
-        ofmem_map(0x11600000, 0x01800000, 0x02800000, 0);
+        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x01800000 - FREE_BASE_1, -1);
+        ofmem_map(0x11600000, 0x01800000, 0x02800000, -1);
     } else if (is_wii_cafe()) {
         ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x02000000 - FREE_BASE_1, -1);
         ofmem_map(0x11600000, 0x02000000, 0x06000000, -1);

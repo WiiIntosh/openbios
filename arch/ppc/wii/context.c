@@ -160,7 +160,7 @@ struct context *switch_to(struct context *ctx)
     struct context *ret;
     unsigned int lr;
 
-    debug("switching to new context:\n");
+    debug("switching to new context: pc %lX\n", ctx->pc);
     save = __context;
     __context = ctx;
 
