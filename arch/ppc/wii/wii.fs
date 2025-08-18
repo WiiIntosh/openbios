@@ -87,7 +87,7 @@ variable keyboard-phandle 0 keyboard-phandle !
 
   \ DT root
   " /" find-device
-  " Wii" model
+  " NTDOY,Revolution" model
   " Wii" encode-string " NTDOY,Revolution" encode-string encode+ " compatible" property \ TODO: System Profiler takes the first string in compatible
   h# e7be2c0 encode-int " clock-frequency" property
 
