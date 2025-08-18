@@ -79,13 +79,6 @@ boot_args_ptr macosx_get_boot_args(void) {
     return (boot_args_ptr)(prop[0]);
 }
 
-int macosx_inject_mkext(void *device_tree) {
-
-    return 0;
-}
-
-#define kMacOSXSignature (0x4D4F5358)
-
 int macosx_patch(void) {
     //
     // BootX generally lays out things in memory in the following order:
@@ -99,7 +92,6 @@ int macosx_patch(void) {
     DTEntry         dtEntry;
     void            *mkextPtr;
     mkext_header    mkextHeader;
-    void            *mkextBuffer;
     unsigned long   prop[2];
     char            mkextName[32];
     void            *newDT;
@@ -144,22 +136,6 @@ int macosx_patch(void) {
         printk("failed to read mkext header\n");
     }
 
-    mkextBuffer = malloc(mkextHeader.length);
-    if (!mkextBuffer) {
-        printk("failed to allocate mkext\n");
-    }
-    ret = obp_devseek(ph, 0, 0);
-    if (ret !=  0) {
-        printk("failed to seek mkext\n");
-    }
-    ret = obp_devread(ph, mkextBuffer, mkextHeader.length);
-    if (ret != mkextHeader.length) {
-        printk("failed to read all mkext\n");
-    }
-
-    // TODO: do adler check.
-
-
     mkextPtr = xnu_boot_args->deviceTreeP;
     prop[0] = (unsigned long)mkextPtr;
     prop[1] = mkextHeader.length;
@@ -171,11 +147,18 @@ int macosx_patch(void) {
     }
 
     //
-    // Copy the mkext.
+    // Read the mkext.
     //
-   memcpy(mkextPtr, mkextBuffer, mkextHeader.length);
-   free(mkextBuffer);
-  //  flush_dcache_range(mkextPtr, ((char*)mkextPtr) + Wii_mkext_len); // is this even needed.
+    ret = obp_devseek(ph, 0, 0);
+    if (ret !=  0) {
+        printk("failed to seek mkext\n");
+    }
+    ret = obp_devread(ph, mkextPtr, mkextHeader.length);
+    if (ret != mkextHeader.length) {
+        printk("failed to read all mkext\n");
+    }
+
+    // TODO: do adler check.
 
     //
     // Copy the new devicetree after the mkext.
@@ -183,7 +166,6 @@ int macosx_patch(void) {
     xnu_boot_args->deviceTreeP      = ((char*)xnu_boot_args->deviceTreeP) + ((prop[1] + 0xFFF) & ~(0xFFF));
     xnu_boot_args->deviceTreeLength = newDTSize;
     memcpy(xnu_boot_args->deviceTreeP, newDT, newDTSize);
-    //flush_dcache_range((char*)xnu_boot_args->deviceTreeP, ((char*)xnu_boot_args->deviceTreeP) + newDTSize);
     free(newDT);
 
     //
@@ -205,47 +187,15 @@ int macosx_patch(void) {
     printk("New top of kernel: 0x%lx\n", xnu_boot_args->topOfKernelData);
     printk("New devicetree: %p, length: 0x%lx\n", xnu_boot_args->deviceTreeP, xnu_boot_args->deviceTreeLength);
 
-
+    //
+    // Fix DRAM sizes.
+    //
     xnu_boot_args->PhysicalDRAM[0].size = 0x02000000; // 32MB MEM1
     xnu_boot_args->PhysicalDRAM[1].base = 0x10000000; // 2016MB MEM2
     xnu_boot_args->PhysicalDRAM[1].size = 0x7E000000;
 
-    //flush_dcache_range((char*)xnu_boot_args, ((char*)xnu_boot_args) + sizeof (boot_args));
-
-
     xnu_patch();
-
-    unsigned long gOFMSRSave;
-    __asm__ volatile("mfmsr %0" : "=r" (gOFMSRSave));
-
-      // Turn off translations
-  unsigned long msr = 0x00001000;
-  __asm__ volatile("sync");
-  __asm__ volatile("mtmsr %0" : : "r" (msr));
-  __asm__ volatile("isync");
-
-    flush_dcache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
-        flush_icache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
-
-    __asm__ volatile("isync");
-  __asm__ volatile("sync");
-  __asm__ volatile("eieio");
-
- // (*(void (*)())0x000923c0)((uint32_t)xnu_boot_args, kMacOSXSignature);
-
-    // Restore translations
-  __asm__ volatile("sync");
-  __asm__ volatile("mtmsr %0" : : "r" (gOFMSRSave));
-  __asm__ volatile("isync");
-
-      flush_dcache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
-        flush_icache_range((char*)0x4000, (char*)xnu_boot_args->topOfKernelData);
-  __asm__ volatile("isync");
-  __asm__ volatile("sync");
-  __asm__ volatile("eieio");
-
-
-    printk("all flushed 0X%X\n", *((uint32_t*)0x00382bb4));
+    printk("XNU ready to boot\n");
 
     return 0;
 }

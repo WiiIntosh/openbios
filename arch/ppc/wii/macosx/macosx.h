@@ -60,7 +60,6 @@ extern unsigned long macho_get_top(void *macho);
 extern int macosx_patch_bootx(char *base, unsigned long length);
 extern int macosx_check_bootx(void);
 extern boot_args_ptr macosx_get_boot_args(void);
-extern int macosx_inject_mkext(void *device_tree);
 extern int macosx_patch(void);
 
 //
