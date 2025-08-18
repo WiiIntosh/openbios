@@ -17,11 +17,7 @@
 #include "macho-loader.h"
 #include "macosx.h"
 #include "mkext.h"
-
-#define BOOTX_VERBOSE
-
-extern void flush_dcache_range(char *start, char *stop);
-extern void flush_icache_range(char *start, char *stop);
+#include "../wii.h"
 
 static phandle_t obp_devopen(const char *path) {
     phandle_t ph;
@@ -105,6 +101,7 @@ int macosx_patch(void) {
     xnu_boot_args = macosx_get_boot_args();
     if (!xnu_boot_args) {
         printk("Failed to get boot args!\n");
+        return 0;
     }
 
     printk("BootArgs: %p, top of kernel: 0x%lx\n", xnu_boot_args, xnu_boot_args->topOfKernelData);
@@ -116,7 +113,7 @@ int macosx_patch(void) {
     // This will be located where the devicetree currently is.
     //
     if (DTLookupEntry(0, "/chosen/memory-map", &dtEntry) != kSuccess) {
-        return 1;
+        return 0;
     }
 
     //
@@ -125,15 +122,18 @@ int macosx_patch(void) {
     ph = obp_devopen("hd:3,\\Wii.mkext");
     if (ph == 0) {
         printk("failed to open mkext\n");
+        return 0;
     }
     ret = obp_devseek(ph, 0, 0);
     if (ret !=  0) {
         printk("failed to seek mkext\n");
+        return 0;
     }
 
     ret = obp_devread(ph, (char*)&mkextHeader, sizeof (mkextHeader));
     if (ret != sizeof (mkextHeader)) {
         printk("failed to read mkext header\n");
+        return 0;
     }
 
     mkextPtr = xnu_boot_args->deviceTreeP;
@@ -143,7 +143,7 @@ int macosx_patch(void) {
     printk("MKEXT (%s) will be at %p, length: %x\n", mkextName, mkextPtr, mkextHeader.length);
 
     if (DTAddProperty(dtEntry, mkextName, prop, sizeof (prop), &newDT, &newDTSize) != kSuccess) {
-        return 1;
+        return 0;
     }
 
     //
@@ -152,10 +152,12 @@ int macosx_patch(void) {
     ret = obp_devseek(ph, 0, 0);
     if (ret !=  0) {
         printk("failed to seek mkext\n");
+        return 0;
     }
     ret = obp_devread(ph, mkextPtr, mkextHeader.length);
     if (ret != mkextHeader.length) {
         printk("failed to read all mkext\n");
+        return 0;
     }
 
     // TODO: do adler check.
@@ -173,7 +175,7 @@ int macosx_patch(void) {
     //
     DTInit(xnu_boot_args->deviceTreeP, xnu_boot_args->deviceTreeLength);
     if (DTLookupEntry(0, "/chosen/memory-map", &dtEntry) != kSuccess) {
-        return 1;
+        return 0;
     }
     prop[0] = (uint32_t)xnu_boot_args->deviceTreeP;
     prop[1] = newDTSize;
@@ -189,13 +191,22 @@ int macosx_patch(void) {
 
     //
     // Fix DRAM sizes.
+    // BootX in some versions will consolidate everything from OF together,
+    // Wii platforms have noncontiguous memory arrangements.
     //
-    xnu_boot_args->PhysicalDRAM[0].size = 0x02000000; // 32MB MEM1
-    xnu_boot_args->PhysicalDRAM[1].base = 0x10000000; // 2016MB MEM2
-    xnu_boot_args->PhysicalDRAM[1].size = 0x7E000000;
+    if (is_wii_rvl()) {
+        xnu_boot_args->PhysicalDRAM[0].base = 0x00000000;
+        xnu_boot_args->PhysicalDRAM[0].size = 0x01800000; // 24MB MEM1
+        xnu_boot_args->PhysicalDRAM[1].base = 0x10000000;
+        xnu_boot_args->PhysicalDRAM[1].size = 0x03E00000; // 62MB MEM2
+    } else if (is_wii_cafe()) {
+        xnu_boot_args->PhysicalDRAM[0].base = 0x00000000;
+        xnu_boot_args->PhysicalDRAM[0].size = 0x02000000; // 32MB MEM1
+        xnu_boot_args->PhysicalDRAM[1].base = 0x10000000;
+        xnu_boot_args->PhysicalDRAM[1].size = 0x7E000000; // 2016MB MEM2
+    }
 
     xnu_patch();
     printk("XNU ready to boot\n");
-
-    return 0;
+    return 1;
 }
