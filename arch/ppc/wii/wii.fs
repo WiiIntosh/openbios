@@ -90,10 +90,12 @@ variable keyboard-phandle 0 keyboard-phandle !
   " NTDOY,Revolution" model
   " Wii" encode-string " NTDOY,Revolution" encode-string encode+ " compatible" property \ TODO: System Profiler takes the first string in compatible
   h# e7be2c0 encode-int " clock-frequency" property
+  \ MEM2 buffers for USB, etc
+  h# 13f2c000 encode-int d4000 encode-int encode+ " mem2-addresses" property
 
   \ Platform interrupt controller MMIO
   " /interrupt-controller" find-device
-  h# 0c003000 encode-int 8 encode-int encode+ " reg" property
+  h# 0c003000 encode-int 100 encode-int encode+ " reg" property
 
   \ DSP MMIO
   " /dsp" find-device
@@ -109,7 +111,7 @@ variable keyboard-phandle 0 keyboard-phandle !
     " " encode-string " built-in" property
     " " encode-string " interrupt-controller" property
     1 encode-int " #interrupt-cells" property
-    h# 0d000030 encode-int 10 encode-int encode+ " reg" property
+    h# 0d800030 encode-int 10 encode-int encode+ " reg" property
     d# 14 encode-int " interrupts" property
     " /interrupt-controller@0c003000" find-dev if
       encode-int " interrupt-parent" property
@@ -118,33 +120,86 @@ variable keyboard-phandle 0 keyboard-phandle !
 
   \ Set Hollywood as interrupt controller parent on Wii hardware devices
   " /aes" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sha" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /usb@0d040000" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /usb@0d050000" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /usb@0d060000" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdhc" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
   " /sdio" find-device
-  " /interrupt-controller@0d000030" find-dev if
+  " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
+
+  \ Create GX-related devices
+  \ Command processor
+  " /" find-device
+  new-device
+    " command-processor" device-name
+    " NTDOY,command-processor" model
+    " NTDOY,command-processor" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0c000000 encode-int 80 encode-int encode+ " reg" property
+    d# 11 encode-int " interrupts" property
+    " /interrupt-controller@0c003000" find-dev if
+      encode-int " interrupt-parent" property
+    then
+  finish-device
+
+  \ Pixel engine
+  " /" find-device
+  new-device
+    " pixel-engine" device-name
+    " NTDOY,pixel-engine" model
+    " NTDOY,pixel-engine" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0c001000 encode-int 100 encode-int encode+ " reg" property
+    d# 9 encode-int d# 10 encode-int encode+ " interrupts" property
+    " /interrupt-controller@0c003000" find-dev if
+      encode-int " interrupt-parent" property
+    then
+  finish-device
+
+  \ Video interface (used for Open Firmware output)
+  " /" find-device
+  new-device
+    " video" device-name
+    " NTDOY,video" model
+    " NTDOY,video" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0c002000 encode-int 100 encode-int encode+ " reg" property
+    d# 8 encode-int " interrupts" property
+    " /interrupt-controller@0c003000" find-dev if
+      encode-int " interrupt-parent" property
+    then
+  finish-device
+
+  \ FIFO
+  " /" find-device
+  new-device
+    " fifo" device-name
+    " NTDOY,fifo" model
+    " NTDOY,fifo" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0c008000 encode-int 4 encode-int encode+ " reg" property
+  finish-device
 
   active-package!
 ;
