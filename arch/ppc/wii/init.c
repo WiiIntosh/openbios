@@ -580,8 +580,24 @@ arch_of_init(void)
         fword("find-device");
         feval("['] wii-gx2-driver-fcode 2 cells + 1 byte-load");
     }
+
+    if (is_wii_rvl()) {
+        //
+        // Enable interrupts on USB host controllers on Wii via "chicken bits" on EHCI.
+        // Pulled from NetBSD/Linux/ppcskel.
+        //
+        // Setting these here will allow the OS X USB host controller drivers to expect a
+        // more normal state as they may load in any order.
+        //
+        out_be32((volatile unsigned int*)0x0D0400CC, in_be32((volatile unsigned int*)0x0D0400CC) | 0xE9800);
+    }
     
+    //
+    // TODO: Disables EHCI from taking 2.0 devices so all route to OHCI.
+    //
     out_be32((volatile unsigned int*)0x0D040050, 0);
+    out_be32((volatile unsigned int*)0x0D120050, 0);
+    out_be32((volatile unsigned int*)0x0D140050, 0);
 
     //
     // Initialize OHCI controller for keyboard support.
