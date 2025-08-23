@@ -28,6 +28,9 @@ h# 1400 constant cafe-line-bytes
 " depth-bits" (find-xt) cell+ value depth-bits-xt
 " line-bytes" (find-xt) cell+ value line-bytes-xt
 
+" fb8-fillrect" (find-xt) value fb8-fillrect-xt
+: fb8-fillrect fb8-fillrect-xt execute ;
+
 \
 \ Registers
 \
@@ -50,6 +53,15 @@ external
   \ due to broken code, for now just pop the 4 from the stack.
   2drop
   2drop
+;
+
+: fill-rectangle  ( color_ind x y width height -- )
+  fb8-fillrect
+;
+
+: dimensions  ( -- width height )
+  cafe-video-width
+  cafe-video-height
 ;
 
 headerless
