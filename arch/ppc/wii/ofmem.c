@@ -43,10 +43,10 @@ extern void setup_mmu(void);
  *  0x11000000  Open Firmware (us)
  *  0x11100000  OF allocations
  *  0x111F0000  PTE Hash
- *  0x11200000  Free space
- *  0x11600000  Start of MEM2-MEM1 expansion region
- *  0x13DFFFFF  End of MEM2-MEM1 expansion region
- *  0x13E00000  XFB and misc region in MEM2
+ *  0x11200000  Start of MEM2-MEM1 expansion region
+ *  0x139FFFFF  End of MEM2-MEM1 expansion region
+ *  0x13A00000  Free space
+ *  0x13C00000  XFB and misc region in MEM2
  *  0x13FFFFFF  End of MEM2
  * 
  *			Virtual
@@ -57,7 +57,7 @@ extern void setup_mmu(void);
  *  0x11000000  Open Firmware (us)
  *  0x11100000  OF allocations
  *  0x111F0000  PTE Hash
- *  0x13E00000  XFB and misc region in MEM2
+ *  0x13C00000  XFB and misc region in MEM2
  *  0x13FFFFFF  End of MEM2
  *
  * Allocations grow downwards from 0x11100000
@@ -76,10 +76,9 @@ extern void setup_mmu(void);
  *  0x11000000  Open Firmware (us)
  *  0x11100000  OF allocations
  *  0x111F0000  PTE Hash
- *  0x11200000  Free space
- *  0x11600000  Start of MEM2-MEM1 expansion region
- *  0x175FFFFF  End of MEM2-MEM1 expansion region
- *  0x17600000  Free space
+ *  0x11200000  Start of MEM2-MEM1 expansion region
+ *  0x171FFFFF  End of MEM2-MEM1 expansion region
+ *  0x17200000  Free space
  *  0x7E000000  GFX memory
  *  0x7FFFFFFF  End of MEM2
  * 
@@ -105,12 +104,12 @@ extern void setup_mmu(void);
 #define FREE_BASE_1		0x00004000
 #define MEM_HOLE_BASE	0x01800000
 #define FREE_BASE_2		0x10000000
-#define FREE_BASE_3		0x11200000
+#define MEM1_MAP_BASE   0x11200000
 
 #define OF_CODE_START	0x11000000
 #define OF_MALLOC_BASE	&_end
 
-#define HASH_BASE		(FREE_BASE_3 - HASH_SIZE)
+#define HASH_BASE		(MEM1_MAP_BASE - HASH_SIZE)
 
 static ofmem_t s_ofmem;
 
@@ -289,7 +288,7 @@ static phys_addr_t ea_to_phys(unsigned long ea, ucell *mode) {
     ucell phys;
 
     /* hardcode our translation needs */
-    if( ea >= OF_CODE_START && ea < FREE_BASE_3 ) {
+    if( ea >= OF_CODE_START && ea < MEM1_MAP_BASE ) {
         *mode = ofmem_arch_default_translation_mode( ea );
         return ea;
     }
@@ -393,19 +392,20 @@ void ofmem_init(void) {
     memset(ofmem, 0, sizeof (*ofmem));
 
     if (is_wii_rvl()) {
-        ofmem->ramsize = 0x4000000; // 64MB virtual.
+        ofmem->ramsize = 0x01800000; // 24MB MEM1.
     } else if (is_wii_cafe()) {
-        ofmem->ramsize = 0x8000000; // 128MB virtual.
+        ofmem->ramsize = 0x02000000; // 32MB MEM1.
     }
 
     ofmem_claim_phys(0, FREE_BASE_1, 0);
     ofmem_claim_virt(0, FREE_BASE_1, 0);
 
+    //
+    // Fill in above MEM1 with some memory from MEM2.
+    //
     if (is_wii_rvl()) {
-        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x01800000 - FREE_BASE_1, -1);
-        ofmem_map(0x11600000, 0x01800000, 0x02800000, -1);
+        ofmem_map(MEM1_MAP_BASE, 0x01800000, 0x02800000, -1);
     } else if (is_wii_cafe()) {
-        ofmem_map(FREE_BASE_1, FREE_BASE_1, 0x02000000 - FREE_BASE_1, -1);
-        ofmem_map(0x11600000, 0x02000000, 0x06000000, -1);
+        ofmem_map(MEM1_MAP_BASE, 0x02000000, 0x06000000, -1);
     }
 }

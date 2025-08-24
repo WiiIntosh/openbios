@@ -629,5 +629,7 @@ arch_of_init(void)
     /* Allocate 8MB memory at load-base */
     fword("load-base");
     load_base = POP();
+    ofmem_claim_phys(load_base, 0x800000, 0);
     ofmem_claim_virt(load_base, 0x800000, 0);
+    ofmem_map(load_base, load_base, 0x800000, 0);
 }

@@ -333,7 +333,7 @@ s" false"    s" little-endian?"       bool-config
 s" false"    s" real-mode?"           bool-config
 s" -1"       s" real-base"            int-config
 s" -1"       s" real-size"            int-config
-s" 4000000"  s" load-base"          int-config
+s" 800000"   s" load-base"          int-config
 s" -1"       s" virt-base"            int-config
 s" -1"       s" virt-size"            int-config
 s" true"     s" vga-ndrv?"            bool-config

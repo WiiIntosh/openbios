@@ -264,7 +264,7 @@ ciface_claim( void )
     ucell align = POP();
     ucell size = POP();
     ucell virt = POP();
-    ucell ret = ofmem_claim_virt( virt, size, align );
+    ucell ret = ofmem_claim( virt, size, align );
 
     /* printk("ciface_claim: %08x %08x %x\n", virt, size, align ); */
     PUSH( ret );
