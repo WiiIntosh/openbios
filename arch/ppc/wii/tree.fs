@@ -81,6 +81,12 @@ new-device
     : close ;
 finish-device
 
+\ ROM device required for classic Mac OS
+" /" find-device
+new-device
+  " rom" device-name
+finish-device
+
 \ -------------------------------------------------------------
 \ Base hardware devices on both Wii and Wii U. Platform-specific items are addeded later.
 \ -------------------------------------------------------------
