@@ -147,6 +147,10 @@ variable keyboard-phandle 0 keyboard-phandle !
   " /interrupt-controller@0d800030" find-dev if
     encode-int " interrupt-parent" property
   then
+  " /ipc" find-device
+  " /interrupt-controller@0d800030" find-dev if
+    encode-int " interrupt-parent" property
+  then
 
   \ Create GX-related devices
   \ Command processor
@@ -268,6 +272,10 @@ variable keyboard-phandle 0 keyboard-phandle !
   " /interrupt-controller@0d800440" find-dev if
     encode-int " interrupt-parent" property
   then
+  " /ipc" find-device
+  " /interrupt-controller@0d800440" find-dev if
+    encode-int " interrupt-parent" property
+  then
 
   \ Create GX2 GPU stub device
   \ Additional properties will be added in the GX2 driver.
@@ -283,19 +291,35 @@ variable keyboard-phandle 0 keyboard-phandle !
     then
   finish-device
 
-  \ IPC
-  " /" find-device
-  new-device
-    " ipc" device-name
-    " NTDOY,ipc" model
-    " NTDOY,ipc" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d800000 encode-int 10 encode-int encode+ " reg" property
-    d# 30 encode-int " interrupts" property
-    " /interrupt-controller@0d800440" find-dev if
-      encode-int " interrupt-parent" property
-    then
-  finish-device
+  \ OHCI USB controller 1 (front ports)
+\  " /" find-device
+\  new-device
+\    " usb" device-name
+\    " usb" device-type
+\    " NTDOY,ohci" model
+\    " NTDOY,ohci" encode-string " compatible" property
+\    " " encode-string " built-in" property
+\    h# 0d130000 encode-int 100 encode-int encode+ " reg" property
+\    d# 35 encode-int " interrupts" property
+\    " /interrupt-controller@0d800440" find-dev if
+\      encode-int " interrupt-parent" property
+\    then
+\  finish-device
+
+  \ OHCI USB controller 2 (GamePad)
+\  " /" find-device
+\  new-device
+\    " usb" device-name
+\    " usb" device-type
+\    " NTDOY,ohciBT" model
+\    " NTDOY,ohciBT" encode-string " compatible" property
+\    " " encode-string " built-in" property
+\    h# 0d150000 encode-int 100 encode-int encode+ " reg" property
+\    d# 37 encode-int " interrupts" property
+\    " /interrupt-controller@0d800440" find-dev if
+\      encode-int " interrupt-parent" property
+\    then
+\  finish-device
 
   active-package!
 ;

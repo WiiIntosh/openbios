@@ -93,182 +93,197 @@ finish-device
 
 \ Processor interface interrupt controller
 new-device
-    " interrupt-controller" device-name
-    " interrupt-controller" device-type
-    " NTDOY,pic" model
-    " NTDOY,pic" encode-string " compatible" property
-    " " encode-string " built-in" property
-    " " encode-string " interrupt-controller" property
-    1 encode-int " #interrupt-cells" property
-    \ Fcode to populate reg property
-    external
-    : open true ;
-    : close ;
+  " interrupt-controller" device-name
+  " interrupt-controller" device-type
+  " NTDOY,pic" model
+  " NTDOY,pic" encode-string " compatible" property
+  " " encode-string " built-in" property
+  " " encode-string " interrupt-controller" property
+  1 encode-int " #interrupt-cells" property
+  \ Fcode to populate reg property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ Serial interface
 new-device
-    " si" device-name
-    " NTDOY,si" model
-    " NTDOY,si" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d006400 encode-int 100 encode-int encode+ " reg" property
-    d# 3 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
-      encode-int " interrupt-parent" property
-    then
-    external
-    : open true ;
-    : close ;
+  " si" device-name
+  " NTDOY,si" model
+  " NTDOY,si" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d006400 encode-int 100 encode-int encode+ " reg" property
+  d# 3 encode-int " interrupts" property
+  " /interrupt-controller" find-dev if
+    encode-int " interrupt-parent" property
+  then
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ External interface
 new-device
-    " exi" device-name
-    " NTDOY,exi" model
-    " NTDOY,exi" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d006800 encode-int 40 encode-int encode+ " reg" property
-    d# 4 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
-      encode-int " interrupt-parent" property
-    then
-    external
-    : open true ;
-    : close ;
+  " exi" device-name
+  " NTDOY,exi" model
+  " NTDOY,exi" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d006800 encode-int 40 encode-int encode+ " reg" property
+  d# 4 encode-int " interrupts" property
+  " /interrupt-controller" find-dev if
+    encode-int " interrupt-parent" property
+  then
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ Audio interface
 new-device
-    " audio-controller" device-name
-    " NTDOY,audio" model
-    " NTDOY,audio" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d006c00 encode-int 20 encode-int encode+ " reg" property
-    d# 5 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
-      encode-int " interrupt-parent" property
-    then
-    external
-    : open true ;
-    : close ;
+  " audio-controller" device-name
+  " NTDOY,audio" model
+  " NTDOY,audio" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d006c00 encode-int 20 encode-int encode+ " reg" property
+  d# 5 encode-int " interrupts" property
+  " /interrupt-controller" find-dev if
+    encode-int " interrupt-parent" property
+  then
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ DSP
 new-device
-    " dsp" device-name
-    " NTDOY,dsp" model
-    " NTDOY,dsp" encode-string " compatible" property
-    " " encode-string " built-in" property
-    \ Fcode to populate reg property
-    d# 6 encode-int " interrupts" property
-    " /interrupt-controller" find-dev if
-      encode-int " interrupt-parent" property
-    then
-    external
-    : open true ;
-    : close ;
+  " dsp" device-name
+  " NTDOY,dsp" model
+  " NTDOY,dsp" encode-string " compatible" property
+  " " encode-string " built-in" property
+  \ Fcode to populate reg property
+  d# 6 encode-int " interrupts" property
+  " /interrupt-controller" find-dev if
+    encode-int " interrupt-parent" property
+  then
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ AES engine
 new-device
-    " aes" device-name
-    " NTDOY,aes" model
-    " NTDOY,aes" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d020000 encode-int 14 encode-int encode+ " reg" property
-    d# 2 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " aes" device-name
+  " NTDOY,aes" model
+  " NTDOY,aes" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d020000 encode-int 14 encode-int encode+ " reg" property
+  d# 2 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ SHA-1 engine
 new-device
-    " sha" device-name
-    " NTDOY,sha" model
-    " NTDOY,sha" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d030000 encode-int 1c encode-int encode+ " reg" property
-    d# 3 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " sha" device-name
+  " NTDOY,sha" model
+  " NTDOY,sha" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d030000 encode-int 1c encode-int encode+ " reg" property
+  d# 3 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ EHCI USB controller 0 (rear USB ports)
 new-device
-    " usb" device-name
-    " usb" device-type
-    " NTDOY,ehci" model
-    " NTDOY,ehci" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d040000 encode-int 100 encode-int encode+ " reg" property
-    d# 4 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " usb" device-name
+  " usb" device-type
+  " NTDOY,ehci" model
+  " NTDOY,ehci" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d040000 encode-int 100 encode-int encode+ " reg" property
+  d# 4 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ OHCI USB controller 0:0 (rear USB ports)
 new-device
-    " usb" device-name
-    " usb" device-type
-    " NTDOY,ohci" model
-    " NTDOY,ohci" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d050000 encode-int 100 encode-int encode+ " reg" property
-    d# 5 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " usb" device-name
+  " usb" device-type
+  " NTDOY,ohci" model
+  " NTDOY,ohci" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d050000 encode-int 100 encode-int encode+ " reg" property
+  d# 5 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ OHCI USB controller 0:1 (internal for Bluetooth)
 new-device
-    " usb" device-name
-    " usb" device-type
-    " NTDOY,ohci" model
-    " NTDOY,ohci" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d060000 encode-int 100 encode-int encode+ " reg" property
-    d# 6 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " usb" device-name
+  " usb" device-type
+  " NTDOY,ohci" model
+  " NTDOY,ohci" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d060000 encode-int 100 encode-int encode+ " reg" property
+  d# 6 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ SDHC controller (front SD card slot)
 new-device
-    " sdhc" device-name
-    " NTDOY,sdhc" model
-    " NTDOY,sdhc" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d070000 encode-int 200 encode-int encode+ " reg" property
-    d# 7 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " sdhc" device-name
+  " NTDOY,sdhc" model
+  " NTDOY,sdhc" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d070000 encode-int 200 encode-int encode+ " reg" property
+  d# 7 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ SDIO controller (internal WiFi)
 new-device
-    " sdio" device-name
-    " NTDOY,sdio" model
-    " NTDOY,sdio" encode-string " compatible" property
-    " " encode-string " built-in" property
-    h# 0d080000 encode-int 200 encode-int encode+ " reg" property
-    d# 8 encode-int " interrupts" property
-    \ Fcode to populate interrupt-parent property
-    external
-    : open true ;
-    : close ;
+  " sdio" device-name
+  " NTDOY,sdio" model
+  " NTDOY,sdio" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d080000 encode-int 200 encode-int encode+ " reg" property
+  d# 8 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
+finish-device
+
+\ IPC
+" /" find-device
+new-device
+  " ipc" device-name
+  " NTDOY,ipc" model
+  " NTDOY,ipc" encode-string " compatible" property
+  " " encode-string " built-in" property
+  h# 0d800000 encode-int 10 encode-int encode+ " reg" property
+  d# 30 encode-int " interrupts" property
+  \ Fcode to populate interrupt-parent property
+  external
+  : open true ;
+  : close ;
 finish-device
 
 \ -------------------------------------------------------------
