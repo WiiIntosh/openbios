@@ -16,6 +16,8 @@
 extern void flush_dcache_range(char *start, char *stop);
 extern void flush_icache_range(char *start, char *stop);
 
+int gIsBootX = 0;
+
 //
 // Check boot args for -v or -s to enable BootX verbose mode.
 //

@@ -14,6 +14,8 @@
 
 #include "boot_args.h"
 
+extern int gIsBootX;
+
 typedef struct {
     struct nlist*   symbol_table;
     unsigned long   symbol_count;

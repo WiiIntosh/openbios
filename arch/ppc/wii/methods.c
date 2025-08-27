@@ -117,7 +117,7 @@ ciface_quiesce( unsigned long args[], unsigned long ret[] )
     printk("OF quiesce was called\n");
     usb_exit();
 
-    if (macosx_check_bootx()) {
+    if (gIsBootX) {
         printk("Handling Mac OS X patching/injection\n");
         macosx_patch();
     }
@@ -264,7 +264,8 @@ ciface_claim( void )
     ucell align = POP();
     ucell size = POP();
     ucell virt = POP();
-    ucell ret = ofmem_claim( virt, size, align );
+    // BootX does fixed claims and doesn't actually care about physical mappings.
+    ucell ret = gIsBootX ? ofmem_claim_virt(virt, size, align) : ofmem_claim(virt, size, align);
 
     /* printk("ciface_claim: %08x %08x %x\n", virt, size, align ); */
     PUSH( ret );
