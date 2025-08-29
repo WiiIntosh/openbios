@@ -72,8 +72,8 @@ headerless
   \ Address, depth, and stride are set by C code.
   flipper-vi-video-height encode-int " height" property
   flipper-vi-video-width encode-int " width" property
-  depth-bits-xt encode-int " depth" property
-  line-bytes-xt encode-int " linebytes" property
+  depth-bits-xt @ encode-int " depth" property
+  line-bytes-xt @ encode-int " linebytes" property
 
   ['] flipper-vi-driver-install is-install
 ;
