@@ -38,7 +38,7 @@ video_get_color( int col_ind )
 	col = video.pal[col_ind];
 	if( VIDEO_DICT_VALUE(video.depth) == 24 || VIDEO_DICT_VALUE(video.depth) == 32 )
 		return col;
-	if( VIDEO_DICT_VALUE(video.depth) == 15 )
+	if( VIDEO_DICT_VALUE(video.depth) == 15 || VIDEO_DICT_VALUE(video.depth) == 16 )
 		return ((col>>9) & 0x7c00) | ((col>>6) & 0x03e0) | ((col>>3) & 0x1f);
 	return 0;
 }

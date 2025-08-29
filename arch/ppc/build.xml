@@ -33,6 +33,7 @@
   <object source="ppc.fs"/>
   <object source="wii/tree.fs"/>
   <object source="wii/wii.fs"/>
+  <object source="NTDOY,video.bin" target="fcode" condition="DRIVER_FLIPPER_VI"/>
   <object source="Wii,GX2.bin" target="fcode" condition="DRIVER_WII_GX2"/>
  </dictionary>
 

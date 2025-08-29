@@ -566,11 +566,7 @@ arch_of_init(void)
     push_str("output-device");
     fword("$setenv");
 
-#if 0
-    if(getbool("tty-interface?") == 1)
-#endif
-        fword("activate-tty-interface");
-
+    fword("activate-tty-interface");
 
     //
     // Install GPU driver.
@@ -579,9 +575,16 @@ arch_of_init(void)
         push_str("/gx2");
         fword("find-device");
         feval("['] wii-gx2-driver-fcode 2 cells + 1 byte-load");
-    }
+    } else if (is_wii_rvl()) {
+        //
+        // Configure video interface.
+        //
+        push_str("/video");
+        fword("find-device");
+        dnode = get_cur_dev();
+        ob_flipper_vi_init(get_path_from_ph(dnode), RVL_XFB_BASE, 0);
+        feval("['] flipper-vi-driver-fcode 2 cells + 1 byte-load");
 
-    if (is_wii_rvl()) {
         //
         // Enable interrupts on USB host controllers on Wii via "chicken bits" on EHCI.
         // Pulled from NetBSD/Linux/ppcskel.
