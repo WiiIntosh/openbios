@@ -33,6 +33,15 @@ of Crazy Nation and the GC Linux project.
 #include "flipper_vi.h"
 #include "wii_ave.h"
 
+#define WII_IPCPPCMSG      0x0D800000
+#define WII_IPCPPCCTRL     0x0D800004
+
+// These need to be in sync with the loader.
+#define CMD_START_FB    0xCAFE0010
+#define CMD_STOP_FB     0xCAFE0011
+#define CMD_SET_XFB     0xA1000000
+#define CMD_SET_FB      0xA2000000
+
 //
 // Read/write registers.
 //
@@ -124,6 +133,35 @@ int ob_flipper_vi_init(const char *path, unsigned long xfb_base, unsigned long f
     VIDEO_DICT_VALUE(video.mvirt) = xfb_base;
     VIDEO_DICT_VALUE(video.depth) = 16;
     VIDEO_DICT_VALUE(video.rb)    = 640 * 2;
+  }
+
+  //
+  // Startup Starlet FB to XFB conversion if running with FB bounce buffer.
+  //
+  if (fb_base != 0) {
+    //
+    // Stop any current conversion.
+    //
+    out_be32((volatile unsigned int*)WII_IPCPPCMSG, CMD_STOP_FB);
+    out_be32((volatile unsigned int*)WII_IPCPPCCTRL, 0x1);
+    while (in_be32((volatile unsigned int*)WII_IPCPPCCTRL) & 0x1);
+
+    //
+    // Send addresses.
+    //
+    out_be32((volatile unsigned int*)WII_IPCPPCMSG, CMD_SET_XFB | (xfb_base >> 8));
+    out_be32((volatile unsigned int*)WII_IPCPPCCTRL, 0x1);
+    while (in_be32((volatile unsigned int*)WII_IPCPPCCTRL) & 0x1);
+    out_be32((volatile unsigned int*)WII_IPCPPCMSG, CMD_SET_FB | (fb_base >> 8));
+    out_be32((volatile unsigned int*)WII_IPCPPCCTRL, 0x1);
+    while (in_be32((volatile unsigned int*)WII_IPCPPCCTRL) & 0x1);
+
+    //
+    // Start conversion.
+    //
+    out_be32((volatile unsigned int*)WII_IPCPPCMSG, CMD_START_FB);
+    out_be32((volatile unsigned int*)WII_IPCPPCCTRL, 0x1);
+    while (in_be32((volatile unsigned int*)WII_IPCPPCCTRL) & 0x1);
   }
 
   return 0;

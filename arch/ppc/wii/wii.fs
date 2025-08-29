@@ -91,7 +91,8 @@ variable keyboard-phandle 0 keyboard-phandle !
   " Wii" encode-string " NTDOY,Revolution" encode-string encode+ " compatible" property \ TODO: System Profiler takes the first string in compatible
   h# e7be2c0 encode-int " clock-frequency" property
   \ MEM2 buffers for USB, etc
-  h# 13f2c000 encode-int d4000 encode-int encode+ " mem2-addresses" property
+  \ Needs to be in sync with memory provided to XNU and the memory region.
+  h# 101C2000 encode-int 23e000 encode-int encode+ " mem2-addresses" property
 
   \ Platform interrupt controller MMIO
   " /interrupt-controller" find-device
@@ -182,13 +183,18 @@ variable keyboard-phandle 0 keyboard-phandle !
   finish-device
 
   \ Video interface (used for Open Firmware output)
+  \ MMIO1: registers
+  \ MMIO2: FB memory (needs to sync with other references)
+  \ MMIO3: XFB memory (needs to sync with other references)
   " /" find-device
   new-device
     " video" device-name
     " NTDOY,video" model
     " NTDOY,video" encode-string " compatible" property
     " " encode-string " built-in" property
-    h# 0c002000 encode-int 100 encode-int encode+ " reg" property
+    h# 0c002000 encode-int 100 encode-int encode+
+      10000000 encode-int encode+ 12c000 encode-int encode+
+      1012c000 encode-int encode+ 96000 encode-int encode+ " reg" property
     d# 8 encode-int " interrupts" property
     " /interrupt-controller@0c003000" find-dev if
       encode-int " interrupt-parent" property
@@ -392,6 +398,10 @@ variable keyboard-phandle 0 keyboard-phandle !
   then
 ;
 
+[IFDEF] CONFIG_DRIVER_FLIPPER_VI
+  -1 value flipper-vi-driver-fcode
+  " NTDOY,video.bin" $encode-file to flipper-vi-driver-fcode
+[THEN]
 [IFDEF] CONFIG_DRIVER_WII_GX2
   -1 value wii-gx2-driver-fcode
   " Wii,GX2.bin" $encode-file to wii-gx2-driver-fcode

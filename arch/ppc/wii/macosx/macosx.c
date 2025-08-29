@@ -194,11 +194,13 @@ int macosx_patch(void) {
     // BootX in some versions will consolidate everything from OF together,
     // Wii platforms have noncontiguous memory arrangements.
     //
+    // On RVL, this must be in sync with any reserved memory regions (FB, USB, etc).
+    //
     if (is_wii_rvl()) {
         xnu_boot_args->PhysicalDRAM[0].base = 0x00000000;
         xnu_boot_args->PhysicalDRAM[0].size = 0x01800000; // 24MB MEM1
-        xnu_boot_args->PhysicalDRAM[1].base = 0x10000000;
-        xnu_boot_args->PhysicalDRAM[1].size = 0x03E00000; // 62MB MEM2
+        xnu_boot_args->PhysicalDRAM[1].base = 0x10400000;
+        xnu_boot_args->PhysicalDRAM[1].size = 0x03C00000; // 62MB MEM2
     } else if (is_wii_cafe()) {
         xnu_boot_args->PhysicalDRAM[0].base = 0x00000000;
         xnu_boot_args->PhysicalDRAM[0].size = 0x02000000; // 32MB MEM1

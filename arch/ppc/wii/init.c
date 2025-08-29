@@ -582,7 +582,7 @@ arch_of_init(void)
         push_str("/video");
         fword("find-device");
         dnode = get_cur_dev();
-        ob_flipper_vi_init(get_path_from_ph(dnode), RVL_XFB_BASE, 0);
+        ob_flipper_vi_init(get_path_from_ph(dnode), RVL_XFB_BASE, RVL_FB_BASE);
         feval("['] flipper-vi-driver-fcode 2 cells + 1 byte-load");
 
         //

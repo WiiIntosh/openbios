@@ -37,22 +37,9 @@ extern int is_wii_cafe(void);
 #define WII_CAFE_CPU_FREQ       1243125000
 #define WII_CAFE_BUS_FREQ       248625000
 
-//
-// Device tree.
-//
-#define WII_DEVICE_TREE_BROADWAY_BASE           0x0C003000
-#define WII_DEVICE_TREE_BROADWAY_LENGTH         0x8
-#define WII_DEVICE_TREE_ESPRESSO_BASE           0x0C000000
-#define WII_DEVICE_TREE_ESPRESSO_LENGTH         0x100
-
-#define WII_DEVICE_TREE_HOLLYWOOD_BASE          0x0D000030
-#define WII_DEVICE_TREE_HOLLYWOOD_LENGTH        0x10
-#define WII_DEVICE_TREE_HOLLYWOOD_IRQ           14
-#define WII_DEVICE_TREE_LATTE_BASE              0x0D800440
-#define WII_DEVICE_TREE_LATTE_LENGTH            0x48
-#define WII_DEVICE_TREE_LATTE_IRQ               24
-
-#define RVL_XFB_BASE            0x13E00000
+// Set to 0 to use direct XFB.
+#define RVL_FB_BASE                             0x10000000
+#define RVL_XFB_BASE                            0x1012C000
 
 #include "kernel.h"
 

@@ -116,13 +116,19 @@ static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
     char            *base;
     int             found;
 
-    static const char videoBatFind[] = {
+    static const char videoBatFind1[] = {
         0xF0, 0x00,     // ... 0xF000
         0x41, 0x82      // beq ...
     };
-    static const char videoBatRepl[] = {
-        0xFF, 0xFF,     // ... 0xFFFF
+    static const char videoBatRepl1[] = {
+        0xFF, 0x00,     // ... 0xFF00
         0x41, 0x82      // beq ...
+    };
+    static const char videoBatFind2[] = {
+        0x63, 0xB9, 0x1F, 0xFC      // ori r25, r29, 0x1FFC
+    };
+    static const char videoBatRepl2[] = {
+        0x63, 0xB9, 0x00, 0x3C      // ori r25, r29, 0x3C
     };
     static const char ioBatFind1[] = {
         0x4C, 0x00, 0x01, 0x2C,     // isync
@@ -151,20 +157,42 @@ static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
     base = (char*)kern_sym_ppc_init;
 
     //
-    // Do video BAT patch. Start at 0x2 offset as patch starts halfway through an opcode.
+    // Do first video BAT patch. Change mask to 0xFF000000 to catch Wii U's FB.
+    // Start at 0x2 offset as patch starts halfway through an opcode.
     //
     found = 0;
     for (int i = 2; i < 0x1000; i += 4) {
-        if (memcmp(&base[i], videoBatFind, sizeof (videoBatFind)) == 0) {
-            memcpy(&base[i], videoBatRepl, sizeof (videoBatRepl));
+        if (memcmp(&base[i], videoBatFind1, sizeof (videoBatFind1)) == 0) {
+            memcpy(&base[i], videoBatRepl1, sizeof (videoBatRepl1));
+            printk("xnu_patch_io_bats: patched video BAT pattern 1 at %p\n", &base[i]);
             found = 1;
             break;
         }
     }
 
     if (!found) {
-        printk("xnu_patch_io_bats: failed to patch video BAT pattern\n");
+        printk("xnu_patch_io_bats: failed to patch video BAT pattern 1\n");
         return 0;
+    }
+
+    if (is_wii_rvl()) {
+        //
+        // Do second video BAT patch. Change size to 2MB to ensure regular MEM2 memory is not included in BAT.
+        //
+        found = 0;
+        for (int i = 0; i < 0x1000; i += 4) {
+            if (memcmp(&base[i], videoBatFind2, sizeof (videoBatFind2)) == 0) {
+                memcpy(&base[i], videoBatRepl2, sizeof (videoBatRepl2));
+                printk("xnu_patch_io_bats: patched video BAT pattern 2 at %p\n", &base[i]);
+                found = 1;
+                break;
+            }
+        }
+
+        if (!found) {
+            printk("xnu_patch_io_bats: failed to patch video BAT pattern 2\n");
+            return 0;
+        }
     }
 
     //
@@ -174,13 +202,14 @@ static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
     for (int i = 0; i < 0x1000; i += 4) {
         if (memcmp(&base[i], ioBatFind1, sizeof (ioBatFind1)) == 0) {
             memcpy(&base[i], ioBatRepl1, sizeof (ioBatRepl1));
+            printk("xnu_patch_io_bats: patched I/O BAT pattern 1 at %p\n", &base[i]);
             found = 1;
             break;
         }
     }
 
     if (!found) {
-        printk("xnu_patch_io_bats: failed to patch I/O BAT pattern\n");
+        printk("xnu_patch_io_bats: failed to patch I/O BAT pattern 1\n");
         return 0;
     }
 
@@ -191,13 +220,14 @@ static int xnu_patch_io_bats(macho_sym_context_t *symContext) {
     for (int i = 0; i < 0x1000; i += 4) {
         if (memcmp(&base[i], ioBatFind2, sizeof (ioBatFind2)) == 0) {
             memcpy(&base[i], ioBatRepl2, sizeof (ioBatRepl2));
+            printk("xnu_patch_io_bats: patched I/O BAT pattern 2 at %p\n", &base[i]);
             found = 1;
             break;
         }
     }
 
     if (!found) {
-        printk("xnu_patch_io_bats: failed to patch I/O BAT pattern\n");
+        printk("xnu_patch_io_bats: failed to patch I/O BAT pattern 2\n");
         return 0;
     }
 
