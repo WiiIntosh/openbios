@@ -298,19 +298,19 @@ variable keyboard-phandle 0 keyboard-phandle !
   finish-device
 
   \ OHCI USB controller 1 (front ports)
-\  " /" find-device
-\  new-device
-\    " usb" device-name
-\    " usb" device-type
-\    " NTDOY,ohci" model
-\    " NTDOY,ohci" encode-string " compatible" property
-\    " " encode-string " built-in" property
-\    h# 0d130000 encode-int 100 encode-int encode+ " reg" property
-\    d# 35 encode-int " interrupts" property
-\    " /interrupt-controller@0d800440" find-dev if
-\      encode-int " interrupt-parent" property
-\    then
-\  finish-device
+  " /" find-device
+  new-device
+    " usb" device-name
+    " usb" device-type
+    " NTDOY,ohci" model
+    " NTDOY,ohci" encode-string " compatible" property
+    " " encode-string " built-in" property
+    h# 0d130000 encode-int 100 encode-int encode+ " reg" property
+    d# 35 encode-int " interrupts" property
+    " /interrupt-controller@0d800440" find-dev if
+      encode-int " interrupt-parent" property
+    then
+  finish-device
 
   \ OHCI USB controller 2 (GamePad)
 \  " /" find-device
