@@ -15,6 +15,7 @@
 #include "libopenbios/bindings.h"
 #include "libopenbios/console.h"
 #include "drivers/drivers.h"
+#include "wii.h"
 
 #ifdef CONFIG_DEBUG_CONSOLE
 /* ******************************************************************
