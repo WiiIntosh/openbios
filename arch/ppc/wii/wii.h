@@ -41,6 +41,12 @@ extern int is_wii_cafe(void);
 #define RVL_FB_BASE                             0x10000000
 #define RVL_XFB_BASE                            0x1012C000
 
+#define CAFE_LATTE_IPCPPCMSG        0x0D800000
+#define CAFE_LATTE_IPCPPCCTRL       0x0D800004
+#define CAFE_CMD_POWEROFF           0xCAFE0001
+#define CAFE_CMD_REBOOT             0xCAFE0002
+#define CAFE_CMD_PRINT              0xCAFE6400
+
 #include "kernel.h"
 
 #endif   /* _H_WII */

@@ -103,6 +103,20 @@ int is_wii_cafe(void) {
     return wii_platform == WII_CAFE;
 }
 
+static void cafe_reset_all(void) {
+    out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCMSG, CAFE_CMD_REBOOT);
+    out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL, 0x1);
+
+    while (in_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL) & 0x1);
+}
+
+static void cafe_poweroff(void) {
+    out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCMSG, CAFE_CMD_POWEROFF);
+    out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL, 0x1);
+
+    while (in_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL) & 0x1);
+}
+
 void entry(void) {
     uint32_t pvr;
     isa_io_base = 0x80000000;
@@ -619,6 +633,16 @@ arch_of_init(void)
     ob_wii_shdc_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));
     
     device_end();
+
+    //
+    // Bind poweroff and reset words.
+    //
+    if (wii_platform == WII_CAFE) {
+        bind_func("ppc32-power-off", cafe_poweroff);
+        feval("['] ppc32-power-off to power-off");
+        bind_func("ppc32-reset-all", cafe_reset_all);
+        feval("['] ppc32-reset-all to reset-all");
+    }
 
     /* Implementation of filll word (required by BootX) */
     bind_func("filll", ffilll);

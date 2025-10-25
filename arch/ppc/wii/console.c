@@ -22,10 +22,6 @@
  * ****************************************************************** */
 
 
-#define CAFE_LATTE_IPCPPCMSG      0x0D800000
-#define CAFE_LATTE_IPCPPCCTRL     0x0D800004
-#define CAFE_LATTE_CMD_PRINT      0xCAFE6400
-
 //
 // Wii CAFE console functions.
 //
@@ -33,7 +29,7 @@ static int cafe_putchar(int c) {
   //
   // Send character over IPC to be displayed on gamepad console.
   //
-  out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCMSG, 0xCAFE6400 | ((uint32_t)c));
+  out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCMSG, CAFE_CMD_PRINT | ((uint32_t)c));
   out_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL, 0x1);
 
   while (in_be32((volatile unsigned int*)CAFE_LATTE_IPCPPCCTRL) & 0x1);
