@@ -289,8 +289,8 @@ void detach_controller (hci_t *controller);
 void usb_poll (void);
 void init_device_entry (hci_t *controller, int num);
 
-void set_feature (usbdev_t *dev, int endp, int feature, int rtype);
-void get_status (usbdev_t *dev, int endp, int rtype, int len, void *data);
+int set_feature (usbdev_t *dev, int endp, int feature, int rtype);
+int get_status (usbdev_t *dev, int endp, int rtype, int len, void *data);
 void set_configuration (usbdev_t *dev);
 int clear_feature (usbdev_t *dev, int endp, int feature, int rtype);
 int clear_stall (endpoint_t *ep);
@@ -299,6 +299,7 @@ void usb_hub_init (usbdev_t *dev);
 void usb_hid_init (usbdev_t *dev);
 void usb_msc_init (usbdev_t *dev);
 void usb_generic_init (usbdev_t *dev);
+int is_usb_speed_ss(int speed);
 
 u8 *get_descriptor (usbdev_t *dev, unsigned char bmRequestType,
 		    int descType, int descIdx, int langID);
