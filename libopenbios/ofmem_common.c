@@ -96,6 +96,7 @@ int ofmem_posix_memalign( void **memptr, size_t alignment, size_t size )
 	void *ret;
 	ucell top;
 	phys_addr_t pa;
+	size_t total_size;
 
 	if( !size )
 		return ENOMEM;
@@ -103,20 +104,39 @@ int ofmem_posix_memalign( void **memptr, size_t alignment, size_t size )
 	if( !ofmem->next_malloc )
 		ofmem->next_malloc = (char*)ofmem_arch_get_malloc_base();
 
-	size = align_size(size + sizeof(alloc_desc_t), alignment);
+	total_size = align_size(size + sizeof(alloc_desc_t), alignment);
 
 	/* look in the freelist */
-	for( pp=&ofmem->mfree; *pp && (**pp).size < size; pp = &(**pp).next ) {
+	for( pp=&ofmem->mfree; *pp && (**pp).size < total_size; pp = &(**pp).next ) {
+	}
+
+	/* If there is a freelist entry that matches the alignment/size, take it */
+	/* TODO: Original implementation fails to use freelist effectively, OHCI driver does a lot of small, same-size allocs/frees */
+	if( *pp && ((**pp).size == total_size)) {
+		/* Alignment should be on physical not virtual address */
+		pa = va2pa((uintptr_t)*pp + sizeof(alloc_desc_t));
+		if (pa == align_ptr(pa, alignment)) {
+			ret = (void *)pa2va(pa);
+
+			d = *pp;
+			*pp = d->next;
+			d->next = NULL;
+
+			memset( ret, 0, size );
+			
+			*memptr = ret;
+			return 0;
+		}
 	}
 
 	/* waste at most 4K by taking an entry from the freelist */
-	if( *pp && (**pp).size > size + 0x1000 ) {
+	if( *pp && (**pp).size > total_size + 0x1000 ) {
 		/* Alignment should be on physical not virtual address */
 		pa = va2pa((uintptr_t)*pp + sizeof(alloc_desc_t));
 		pa = align_ptr(pa, alignment);
 		ret = (void *)pa2va(pa);
 
-		memset( ret, 0, (**pp).size - sizeof(alloc_desc_t) );
+		memset( ret, 0, size );
 		*pp = (**pp).next;
 
 		*memptr = ret;
@@ -130,18 +150,18 @@ int ofmem_posix_memalign( void **memptr, size_t alignment, size_t size )
 	pa = align_ptr(pa, alignment);
 	ret = (void *)pa2va(pa);
 
-	if( pointer2cell(ret) + size > top ) {
-		printk("out of malloc memory (%x)!\n", size );
+	if( pointer2cell(ret) + total_size > top ) {
+		printk("out of malloc memory (%x)!\n", total_size );
 		return ENOMEM;
 	}
 
 	d = (alloc_desc_t*)((uintptr_t)ret - sizeof(alloc_desc_t));
-	ofmem->next_malloc += size;
+	ofmem->next_malloc += total_size;
 
 	d->next = NULL;
-	d->size = size;
+	d->size = total_size;
 
-	memset( ret, 0, size - sizeof(alloc_desc_t) );
+	memset( ret, 0, size );
 
 	*memptr = ret;
 	return 0;
@@ -171,13 +191,12 @@ void ofmem_free( void *ptr )
 	if( !ptr )
 		return;
 
+	/* Locate entry immediately after this new one */
 	d = (alloc_desc_t*)((char *)ptr - sizeof(alloc_desc_t));
-	d->next = ofmem->mfree;
-
-	/* insert in the (sorted) freelist */
-	for( pp=&ofmem->mfree; *pp && (**pp).size < d->size ; pp = &(**pp).next ) {
+	for( pp=&ofmem->mfree; *pp && *pp < d; pp = &(**pp).next ) {
 	}
 
+	/* Insert into the list, now sorted */
 	d->next = *pp;
 	*pp = d;
 }
