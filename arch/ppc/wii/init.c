@@ -456,6 +456,20 @@ dma_sync(void)
     flush_icache_range(cell2pointer(virt), cell2pointer(virt + size));
 }
 
+static void ehci_disable(uint32_t addr) {
+    // Stop EHCI controller and wait for halt bit to be set.
+    out_be32((volatile unsigned int*)(addr + 0x10), in_be32((volatile unsigned int*)(addr + 0x10)) & ~(0x1));
+    while ((in_be32((volatile unsigned int*)(addr + 0x14)) & (1 << 12)) == 0) {
+        mdelay(1);
+    }
+
+    // Reset the controller and wait for reset to complete.
+    out_be32((volatile unsigned int*)(addr + 0x10), in_be32((volatile unsigned int*)(addr + 0x10)) | 0x2);
+    while (in_be32((volatile unsigned int*)(addr + 0x10)) & 0x2) {
+        mdelay(1);
+    }
+}
+
 void
 arch_of_init(void)
 {
@@ -610,19 +624,36 @@ arch_of_init(void)
     }
     
     //
-    // TODO: Disables EHCI from taking 2.0 devices so all route to OHCI.
+    // Reset EHCI controllers to force all devices to OHCI.
     //
-    out_be32((volatile unsigned int*)0x0D040050, 0);
-    out_be32((volatile unsigned int*)0x0D120050, 0);
-    out_be32((volatile unsigned int*)0x0D140050, 0);
+    ehci_disable(0x0D040000);
+    if (wii_platform == WII_CAFE) {
+        ehci_disable(0x0D120000);
+        ehci_disable(0x0D140000);
+    }
 
     //
-    // Initialize OHCI controller for keyboard support.
+    // Initialize OHCI controllers.
     //
     push_str("/usb@0d050000");
     fword("find-device");
     dnode = get_cur_dev();
     ob_usb_ohci_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));
+    push_str("/usb@0d060000");
+    fword("find-device");
+    dnode = get_cur_dev();
+    ob_usb_ohci_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));
+
+    if (wii_platform == WII_CAFE) {
+        push_str("/usb@0d130000");
+        fword("find-device");
+        dnode = get_cur_dev();
+        ob_usb_ohci_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));
+        push_str("/usb@0d150000");
+        fword("find-device");
+        dnode = get_cur_dev();
+        ob_usb_ohci_init(get_path_from_ph(dnode), get_int_property(dnode, "reg", NULL));
+    }
 
     //
     // Initialize SDHC.
